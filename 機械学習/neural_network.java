@@ -35,11 +35,31 @@ public class neural_network{
 		while (err > LIMIT){
 			err = 0.0;
 			for(j = 0;j<n_of_e;++j){
-				
+				// ‹t•ûŒü‚ÌŒvŽZ
+				o=forward(wh, wo, hi, e[j]);
+				// o—Í‘w‚Ìd‚Ý‚Ì’²®
+				olearn(wo, hi, e[j], o);
+				// Œë·‚ÌÏŽZ
+				err += (o-e[j][INPUTNO])*(o-e[j][INPUTNO]);
 			}
-		}
+			//Œë·‚Ìo—Í
+			System.out.println(err);
+		}//ŠwKI—¹
 		
+		// Œ‹‡‰×d‚Ìo—Í
+		print(wh, wo);
+		
+		// ŠwKƒf[ƒ^‚É‘Î‚·‚éo—Í
+		for(i=0;i < n_of_e;++i){
+			System.out.print(i+" ");
+			for(j=0;j<INPUTNO+1;++j)
+				System.out.print(e[i][j] + " ");
+			o = forward(wh ,wo ,hi ,e[i]);
+			System.out.println(o);
+		}
+		return;
 	}
+	
 	
 	public static int getdata(double e[][]){
 	}
