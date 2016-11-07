@@ -1,21 +1,56 @@
 import java.util.*;
 
 public class neural_network{
-	/* 記号定数の定義 */
-	int INPUTNO = 2;		// 入力値のセル数
-	int HIDDENNO = 2;		// 中間層のセル数位
-	int ALPHA = 20;			// 学習係数
-	int MAXINPUTNO = 100;	// 学習データの最高個数
-	int BIGNUM = 100;		// 誤差の初期値
-	double LIMIT = 0.001;		// 誤差の上限値
 	
 	public static void main(String[] args){
-		double wh[HIDDENNO][INPUTNO + 1];	// 中間層の重み
-		double wo[HIDDENNO + 1];			// 出力層の重み
-		double e[MAXINPUTNO][INPUTNO + 1];	// 学習データセット
-		double hi[HIDDENNO + 1];			// 中間層の出力
-		double o;							// 出力
-		double err = BIGNUM;
+			/* 記号定数の定義 */
+		int INPUTNO = 2;		// 入力値のセル数
+		int HIDDENNO = 2;		// 中間層のセル数位
+		int ALPHA = 20;			// 学習係数
+		int MAXINPUTNO = 100;	// 学習データの最高個数
+		int BIGNUM = 100;		// 誤差の初期値
+		double LIMIT = 0.001;		// 誤差の上限値
+		
+		
+		double[][] wh = new double[HIDDENNO][INPUTNO + 1];	// 中間層の重み
+		double[] wo = new double[HIDDENNO + 1];				// 出力層の重み
+		double[][] e = new double[MAXINPUTNO][INPUTNO + 1];	// 学習データセット
+		double[] hi = new double[HIDDENNO + 1];				// 中間層の出力
+		double o;											// 出力
+		double err = BIGNUM;								// 誤差の評価
+		int i,j;											// 繰り返しの制御
+		int n_of_e;											// 学習データの個数
+		
+		//重みの初期化
+		initwh(wh);
+		initwo(wo);
+		print(wh,wo);
+		
+		// 学習データの読み込み
+		n_of_e =getdata(e);
+		System.out.println("学習データの個数 : "+ n_of_e);
+		
+		
+		// 学習
+		while (err > LIMIT){
+			err = 0.0;
+			for(j = 0;j<n_of_e;++j){
+				
+			}
+		}
 		
 	}
+	
+	public static int getdata(double e[][]){
+	}
+	public static void olearn(double wo[] ,double hi[] ,double e[] ,double o){
+	}
+	public static double forward(double wh[][] ,double wo[], double hi[], double e[]){
+	}
+	public static void print(double wh[][], double wo[]){}
+	public static void initwh(double wh[][]){}
+	public static void initwo(double wo[]){}
+	public static double drnd(){}
+	public static double s(double u){}
+	
 }
