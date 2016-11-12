@@ -69,6 +69,7 @@ public class neural_network{
 		Scanner sc = new Scanner(System.in);
 		// データの入力
 		while(sc.hasNextInt()){
+			e[n_of_e][j] = sc.nextInt();
 			++j;
 			if(j > INPUTNO){
 				j = 0;
@@ -133,11 +134,11 @@ public class neural_network{
 		int i,j;
 		
 		for(i = 0; i < HIDDENNO; ++i){
-			for(j = 0; j < INPUTNO; ++j){
+			for(j = 0; j < INPUTNO + 1; ++j){
 				System.out.print(wh[i][j] + " ");
 			}
-			System.out.println();
 		}
+		System.out.println();
 		for(i = 0; i < HIDDENNO + 1; ++i){
 			System.out.print(wo[i] + " ");
 		}
@@ -145,9 +146,56 @@ public class neural_network{
 	}
 	
 	
-	public static void initwh(double wh[][]){}
-	public static void initwo(double wo[]){}
-	public static double drnd(){}
-	public static double s(double u){}
+	/*
+	中間層の重みの初期化
+	intwh(中間層の重みの配列)
+	*/
+	public static void initwh(double wh[][]){
+		int i,j;
+		//乱数による結合荷重の決定
+		for(i = 0; i < HIDDENNO; ++i){
+			for(j = 0; j < INPUTNO + 1; ++j){
+				wh[i][j] = Math.random() * 2 - 1;
+			}
+		}
+		// 定数を荷重として与える場合
+		/*
+		wh[0][0] = -2;
+		wh[0][1] = 3;
+		wh[0][2] = -1;
+		wh[1][0] = -2;
+		wh[1][1] = 1;
+		wh[1][2] = 1;
+		*/
+		
+	}
+	
+	
+	/*
+	出力層の重みの初期化
+	intwh(出力層の重みの配列)
+	*/
+	public static void initwo(double wo[]){
+		int i;
+		for(i = 0; i < HIDDENNO + 1; ++i){
+			wo[i] = Math.random() * 2 - 1;
+			
+		}
+	}
+	
+	/*
+	乱数を生成するクラス
+	javaではMath.random()で生成できるため無視
+	*/
+	//public static double drnd(){}
+	
+	
+	/*
+	シグモイド関数
+	s(重み付き和)
+	*/
+	public static double s(double u){
+		return 1.0 / (1.0 + Math.exp(-u));
+	}
 	
 }
