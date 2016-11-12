@@ -1,17 +1,15 @@
 import java.util.*;
 
 public class neural_network{
-	
+	// 記号定数の定義
+	static int INPUTNO = 2;		// 入力値のセル数
+	static int HIDDENNO = 2;		// 中間層のセル数位
+	static int ALPHA = 20;			// 学習係数
+	static int MAXINPUTNO = 100;	// 学習データの最高個数
+	static int BIGNUM = 100;		// 誤差の初期値
+	static double LIMIT = 0.001;		// 誤差の上限値
+
 	public static void main(String[] args){
-			/* 記号定数の定義 */
-		int INPUTNO = 2;		// 入力値のセル数
-		int HIDDENNO = 2;		// 中間層のセル数位
-		int ALPHA = 20;			// 学習係数
-		int MAXINPUTNO = 100;	// 学習データの最高個数
-		int BIGNUM = 100;		// 誤差の初期値
-		double LIMIT = 0.001;		// 誤差の上限値
-		
-		
 		double[][] wh = new double[HIDDENNO][INPUTNO + 1];	// 中間層の重み
 		double[] wo = new double[HIDDENNO + 1];				// 出力層の重み
 		double[][] e = new double[MAXINPUTNO][INPUTNO + 1];	// 学習データセット
@@ -61,8 +59,27 @@ public class neural_network{
 	}
 	
 	
+	/*
+	学習データの読み込みをするメソッド
+	getdata(学習データを入れる配列)
+	*/
 	public static int getdata(double e[][]){
+		int n_of_e =0;	// データセットの個数
+		int j = 0;		// 繰り返しの制御
+		Scanner sc = new Scanner(System.in);
+		// データの入力
+		while(sc.hasNextInt()){
+			++j;
+			if(j > INPUTNO){
+				j = 0;
+				++n_of_e;
+			}
+		}
+		return n_of_e;
 	}
+	
+	
+	
 	public static void olearn(double wo[] ,double hi[] ,double e[] ,double o){
 	}
 	public static double forward(double wh[][] ,double wo[], double hi[], double e[]){
