@@ -1,0 +1,370 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="5_3.html">＜前へ＞</a>
+<a href="6_1.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>5.4 評価と探索の修正</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では修正したBoardクラスを使って探索と局面評価を行ないます。<br>
+最初に探索処理を修正します。<br>
+対象のソースコードは"com.c"です。<br>
+長くなるので関数の一部を省略してあります。<br>
+</p>
+<ul>
+<li><b>探索開始</b>
+<p>
+探索開始時にBoard_InitializePattern()を呼び出してパターンの初期化を行ないます。<br>
+</p>
+<p>
+<pre>
+int Com_NextMove(Com *self, const Board *in_board, int in_color, int *out_value)
+{
+	int result;
+	int left;
+	int value;
+	int color;
+
+	Board_Copy(in_board, self->Board);
+	self->Node = 0;
+	left = Board_CountDisks(self->Board, EMPTY);
+	Com_MakeList(self);
+<font color="red">	Board_InitializePattern(self->Board);</font>
+
+	（中略）
+
+	return result;
+}
+</pre>
+</p>
+<li><b>中盤探索</b>
+<p>
+着手時にはBoard_FlipPattern()を呼び出し、１手戻すときにはBoard_UnflipPattern()を呼び出すようにします。<br>
+</p>
+<p>
+<pre>
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+
+	（中略）
+
+	if (in_depth > 2) {
+		info_num = Com_Sort(self, in_color, info);
+		if (info_num > 0) {
+			*out_move = info[0].Move->Pos;
+			can_move = 1;
+		}
+		for (i = 0; i < info_num; i++) {
+<font color="red">			Board_FlipPattern(self->Board, in_color, info[i].Move->Pos);</font>
+			RemoveList(info[i].Move);
+			value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+<font color="red">			Board_UnflipPattern(self->Board);</font>
+			RecoverList(info[i].Move);
+			if (value > max) {
+				max = value;
+				*out_move = info[i].Move->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	} else {
+		for (p = self->Moves->Next; p; p = p->Next) {
+<font color="red">			if (Board_FlipPattern(self->Board, in_color, p->Pos)) {</font>
+				RemoveList(p);
+				if (!can_move) {
+					*out_move = p->Pos;
+					can_move = 1;
+				}
+				value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+<font color="red">				Board_UnflipPattern(self->Board);</font>
+				RecoverList(p);
+				if (value > max) {
+					max = value;
+					*out_move = p->Pos;
+					if (max >= in_beta) {
+						return in_beta;
+					}
+				}
+			}
+		}
+	}
+
+	（中略）
+
+	return max;
+}
+</pre>
+</p>
+<li><b>終盤探索</b>
+<p>
+空きマスが８個より多い場合には着手時にBoard_FlipPattern()を呼び出し、１手戻すときにBoard_UnflipPattern()を呼び出すようにします。<br>
+空きマスが８個より少ない場合には従来と同じ処理を行ないます。<br>
+空きマスが８個より少ない場合には局面評価を行なわないので、パターンの更新が必要ないためです。<br>
+</p>
+</p>
+<p>
+<pre>
+static int Com_EndSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+
+	（中略）
+
+	if (in_depth > 8) {
+		info_num = Com_Sort(self, in_color, info);
+		if (info_num > 0) {
+			*out_move = info[0].Move->Pos;
+			can_move = 1;
+		}
+		for (i = 0; i < info_num; i++) {
+<font color="red">			Board_FlipPattern(self->Board, in_color, info[i].Move->Pos);</font>
+			RemoveList(info[i].Move);
+			value = -Com_EndSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+<font color="red">			Board_UnflipPattern(self->Board);</font>
+			RecoverList(info[i].Move);
+			if (value > max) {
+				max = value;
+				*out_move = info[i].Move->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	} else {
+		for (p = self->Moves->Next; p; p = p->Next) {
+			if (Board_Flip(self->Board, in_color, p->Pos)) {
+				RemoveList(p);
+				if (!can_move) {
+					*out_move = p->Pos;
+					can_move = 1;
+				}
+				value = -Com_EndSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+				Board_Unflip(self->Board);
+				RecoverList(p);
+				if (value > max) {
+					max = value;
+					*out_move = p->Pos;
+					if (max >= in_beta) {
+						return in_beta;
+					}
+				}
+			}
+		}
+	}
+
+	（中略）
+
+	return max;
+}
+</pre>
+</p>
+<li><b>候補手の並び替え</b>
+<p>
+候補手の並び替え時にも局面評価を行なうので、Board_FlipPattern()、Board_UnflipPattern()を呼び出すようにします。<br>
+</p>
+<p>
+<pre>
+static int Com_Sort(Com *self, int in_color, MoveInfo *out_info)
+{
+	int info_num = 0;
+	MoveList *p;
+	MoveInfo info_tmp, *best_info;
+	int i, j;
+
+	for (p = self->Moves->Next; p; p = p->Next) {
+<font color="red">		if (Board_FlipPattern(self->Board, in_color, p->Pos)) {</font>
+			out_info[info_num].Move = p;
+			out_info[info_num].Value = Evaluator_Value(self->Evaluator, self->Board);
+			info_num++;
+<font color="red">			Board_UnflipPattern(self->Board);</font>
+		}
+	}
+
+	（中略）
+	
+	return info_num;
+}
+</pre>
+</p>
+<li><b>局面評価</b>
+<p>
+これ以降は"evaluator.c"の修正を行ないます。<br>
+まずは評価関数Evaluator_Value()を修正します。<br>
+パターンの状態をBoard_Pattern()で取得するようにします。<br>
+</p>
+<p>
+<pre>
+int Evaluator_Value(const Evaluator *self, const Board *in_board)
+{
+	int result = 0;
+
+<font color="red">	result += self->Value[PATTERN_ID_LINE4][Board_Pattern(in_board, PATTERN_ID_LINE4_1)];
+	result += self->Value[PATTERN_ID_LINE4][Board_Pattern(in_board, PATTERN_ID_LINE4_2)];
+	result += self->Value[PATTERN_ID_LINE4][Board_Pattern(in_board, PATTERN_ID_LINE4_3)];
+	result += self->Value[PATTERN_ID_LINE4][Board_Pattern(in_board, PATTERN_ID_LINE4_4)];
+	result += self->Value[PATTERN_ID_LINE3][Board_Pattern(in_board, PATTERN_ID_LINE3_1)];
+	result += self->Value[PATTERN_ID_LINE3][Board_Pattern(in_board, PATTERN_ID_LINE3_2)];
+	result += self->Value[PATTERN_ID_LINE3][Board_Pattern(in_board, PATTERN_ID_LINE3_3)];
+	result += self->Value[PATTERN_ID_LINE3][Board_Pattern(in_board, PATTERN_ID_LINE3_4)];
+	result += self->Value[PATTERN_ID_LINE2][Board_Pattern(in_board, PATTERN_ID_LINE2_1)];
+	result += self->Value[PATTERN_ID_LINE2][Board_Pattern(in_board, PATTERN_ID_LINE2_2)];
+	result += self->Value[PATTERN_ID_LINE2][Board_Pattern(in_board, PATTERN_ID_LINE2_3)];
+	result += self->Value[PATTERN_ID_LINE2][Board_Pattern(in_board, PATTERN_ID_LINE2_4)];
+	result += self->Value[PATTERN_ID_DIAG8][Board_Pattern(in_board, PATTERN_ID_DIAG8_1)];
+	result += self->Value[PATTERN_ID_DIAG8][Board_Pattern(in_board, PATTERN_ID_DIAG8_2)];
+	result += self->Value[PATTERN_ID_DIAG7][Board_Pattern(in_board, PATTERN_ID_DIAG7_1)];
+	result += self->Value[PATTERN_ID_DIAG7][Board_Pattern(in_board, PATTERN_ID_DIAG7_2)];
+	result += self->Value[PATTERN_ID_DIAG7][Board_Pattern(in_board, PATTERN_ID_DIAG7_3)];
+	result += self->Value[PATTERN_ID_DIAG7][Board_Pattern(in_board, PATTERN_ID_DIAG7_4)];
+	result += self->Value[PATTERN_ID_DIAG6][Board_Pattern(in_board, PATTERN_ID_DIAG6_1)];
+	result += self->Value[PATTERN_ID_DIAG6][Board_Pattern(in_board, PATTERN_ID_DIAG6_2)];
+	result += self->Value[PATTERN_ID_DIAG6][Board_Pattern(in_board, PATTERN_ID_DIAG6_3)];
+	result += self->Value[PATTERN_ID_DIAG6][Board_Pattern(in_board, PATTERN_ID_DIAG6_4)];
+	result += self->Value[PATTERN_ID_DIAG5][Board_Pattern(in_board, PATTERN_ID_DIAG5_1)];
+	result += self->Value[PATTERN_ID_DIAG5][Board_Pattern(in_board, PATTERN_ID_DIAG5_2)];
+	result += self->Value[PATTERN_ID_DIAG5][Board_Pattern(in_board, PATTERN_ID_DIAG5_3)];
+	result += self->Value[PATTERN_ID_DIAG5][Board_Pattern(in_board, PATTERN_ID_DIAG5_4)];
+	result += self->Value[PATTERN_ID_DIAG4][Board_Pattern(in_board, PATTERN_ID_DIAG4_1)];
+	result += self->Value[PATTERN_ID_DIAG4][Board_Pattern(in_board, PATTERN_ID_DIAG4_2)];
+	result += self->Value[PATTERN_ID_DIAG4][Board_Pattern(in_board, PATTERN_ID_DIAG4_3)];
+	result += self->Value[PATTERN_ID_DIAG4][Board_Pattern(in_board, PATTERN_ID_DIAG4_4)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_1)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_2)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_3)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_4)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_5)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_6)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_7)];
+	result += self->Value[PATTERN_ID_EDGE8][Board_Pattern(in_board, PATTERN_ID_EDGE8_8)];
+	result += self->Value[PATTERN_ID_CORNER8][Board_Pattern(in_board, PATTERN_ID_CORNER8_1)];
+	result += self->Value[PATTERN_ID_CORNER8][Board_Pattern(in_board, PATTERN_ID_CORNER8_2)];
+	result += self->Value[PATTERN_ID_CORNER8][Board_Pattern(in_board, PATTERN_ID_CORNER8_3)];
+	result += self->Value[PATTERN_ID_CORNER8][Board_Pattern(in_board, PATTERN_ID_CORNER8_4)];</font>
+	/* parity */
+	result += self->Value[PATTERN_ID_PARITY][Board_CountDisks(in_board, EMPTY) &amp; 1];
+
+	return result;
+}
+</pre>
+</p>
+<li><b>評価値更新</b>
+<p>
+次に評価値更新処理の修正です。<br>
+修正対象となるのはEvaluator_Add()で、パターンの状態をBoard_Pattern()で取得するようにします。<br>
+</p>
+<p>
+<pre>
+void Evaluator_Add(Evaluator *self, const Board *in_board, int in_value)
+{
+	int index;
+	double diff;
+
+	diff = (double)(in_value - Evaluator_Value(self, in_board));
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE4_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE4, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE4_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE4, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE4_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE4, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE4_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE4, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE3_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE3, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE3_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE3, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE3_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE3, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE3_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE3, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE2_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE2, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE2_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE2, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE2_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE2, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_LINE2_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_LINE2, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG8_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG8, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG8_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG8, self->MirrorLine[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG7_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG7, self->MirrorLine[index * POW_3_1], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG7_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG7, self->MirrorLine[index * POW_3_1], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG7_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG7, self->MirrorLine[index * POW_3_1], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG7_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG7, self->MirrorLine[index * POW_3_1], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG6_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG6, self->MirrorLine[index * POW_3_2], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG6_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG6, self->MirrorLine[index * POW_3_2], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG6_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG6, self->MirrorLine[index * POW_3_2], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG6_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG6, self->MirrorLine[index * POW_3_2], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG5_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG5, self->MirrorLine[index * POW_3_3], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG5_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG5, self->MirrorLine[index * POW_3_3], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG5_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG5, self->MirrorLine[index * POW_3_3], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG5_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG5, self->MirrorLine[index * POW_3_3], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG4_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG4, self->MirrorLine[index * POW_3_4], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG4_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG4, self->MirrorLine[index * POW_3_4], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG4_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG4, self->MirrorLine[index * POW_3_4], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_DIAG4_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_DIAG4, self->MirrorLine[index * POW_3_4], index, diff);
+<font color="red">	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_1), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_2), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_3), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_4), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_5), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_6), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_7), -1, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_EDGE8, Board_Pattern(in_board, PATTERN_ID_EDGE8_8), -1, diff);</font>
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_CORNER8_1);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_CORNER8, self->MirrorCorner[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_CORNER8_2);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_CORNER8, self->MirrorCorner[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_CORNER8_3);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_CORNER8, self->MirrorCorner[index], index, diff);
+<font color="red">	index = Board_Pattern(in_board, PATTERN_ID_CORNER8_4);</font>
+	Evaluator_AddPattern(self, PATTERN_ID_CORNER8, self->MirrorCorner[index], index, diff);
+	Evaluator_AddPattern(self, PATTERN_ID_PARITY, Board_CountDisks(in_board, EMPTY) &amp; 1, -1, diff);
+}
+</pre>
+</p>
+</ul>
+<p>
+これで本章の修正は終了です。<br>
+実行してみると中盤探索が２倍程高速になっています。<br>
+しかし終盤探索はあまり効果がないようです。<br>
+これは終盤探索のリーフ近くでは従来と同じ処理を行なっているためです。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="5_3.html">＜前へ＞</a>
+<a href="6_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="6_6.html">＜前へ＞</a>
+<a href="7_1.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>6.7 定石の登録</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+前節でコンピュータが定石を使用できるようになりました。<br>
+本節では定石ファイルを作成して、対局時にコンピュータがそのファイルを読み込むようにします。<br>
+"main.c"を修正します。<br>
+</p>
+<ul>
+<li><b>定数</b>
+<p>
+最初に必要な定数を定義しておきます。<br>
+</p>
+<p>
+<pre>
+#define OPENING_TRANSCRIPT_FILE "open_trans.txt"
+#define OPENING_FILE "open.dat"
+#define TRANSCRIPT_SIZE 128
+</pre>
+</p>
+<p>
+OPENING_TRANSCRIPT_FILEは定石ファイルを作成するために使用します。<br>
+詳しいことは後で説明します。<br>
+OPENING_FILEは定石ファイルです。<br>
+このファイルを対局時に使用します。<br>
+TRANSCRIPT_SIZEはOPENING_TRANSCRIPT_FILEファイルを読み込むときに使用するバッファサイズです。<br>
+後で説明しますが、OPENING_TRANSCRIPT_FILEはテキストファイルです。<br>
+OPENING_TRANSCRIPT_FILEの１行１行が最大何バイトであるかをここで定義しています。<br>
+</p>
+<li><b>パラメータ追加</b>
+<p>
+"main.c"で使用するパラメータを追加します。<br>
+最初にMainParam構造体にOpeningクラスを追加します。<br>
+</p>
+<p>
+<pre>
+struct _MainParam
+{
+	Board *Board;
+	Evaluator *Evaluator;
+<font color="red">	Opening *Opening;</font>
+	Com *Com;
+};
+typedef struct _MainParam MainParam;
+</pre>
+</p>
+<p>
+次にMainParam初期化関数を修正します。<br>
+Openingクラスを生成して定石ファイルを読み込むようにします。<br>
+またComクラス生成時にOpeningクラスを渡すようにします。<br>
+</p>
+<p>
+<pre>
+static int main_param_initialize_each(MainParam *self)
+{
+	self->Board = Board_New();
+	if (!self->Board) {
+		return 0;
+	}
+	self->Evaluator = Evaluator_New();
+	if (!self->Evaluator) {
+		return 0;
+	}
+	Evaluator_Load(self->Evaluator, EVALUATOR_FILE);
+<font color="red">	self->Opening = Opening_New();
+	if (!self->Opening) {
+		return 0;
+	}
+	Opening_Load(self->Opening, OPENING_FILE);
+	self->Com = Com_New(self->Evaluator, self->Opening);</font>
+	if (!self->Com) {
+		return 0;
+	}
+
+	return 1;
+}
+</pre>
+</p>
+<p>
+MainParam破棄時にOpeningクラスも破棄するようにします。<br>
+</p>
+<p>
+<pre>
+static void main_param_finalize(MainParam *self)
+{
+	if (self->Com) {
+		Com_Delete(self->Com);
+	}
+<font color="red">	if (self->Opening) {
+		Opening_Delete(self->Opening);
+	}</font>
+	if (self->Evaluator) {
+		Evaluator_Delete(self->Evaluator);
+	}
+	if (self->Board) {
+		Board_Delete(self->Board);
+	}
+}
+</pre>
+</p>
+</p>
+<li><b>定石使用／非使用の設定</b>
+<p>
+定石を使用したい場面では定石を使用するように設定し、定石を使用したくない場面では定石を使用しないように設定します。<br>
+対局時には定石を使用します。<br>
+</p>
+<p>
+<pre>
+static void play(Board *board, Com *com)
+{
+
+	（中略）
+
+	while (1) {
+		printf("コンピュータのレベルを選択してください (1-4)\n");
+		get_stream(buffer, BUFFER_SIZE, stdin);
+		if (!strcmp(buffer, "1")) {
+			Com_SetLevel(com, 2, 8, 10);
+			break;
+		} else if (!strcmp(buffer, "2")) {
+			Com_SetLevel(com, 4, 10, 12);
+			break;
+		} else if (!strcmp(buffer, "3")) {
+			Com_SetLevel(com, 6, 12, 14);
+			break;
+		} else if (!strcmp(buffer, "4")) {
+			Com_SetLevel(com, 8, 14, 16);
+			break;
+		}
+	}
+<font color="red">	Com_SetOpening(com, 1);</font>
+
+	（中略）
+}
+</pre>
+<p>
+次に学習時には定石を使用しないようにします。<br>
+</p>
+<p>
+<pre>
+static void learn(Board *board, Evaluator *evaluator, Com *com)
+{
+
+	（中略）
+
+	Com_SetLevel(com, 4, 12, 12);
+<font color="red">	Com_SetOpening(com, 0);</font>
+
+	（中略）
+
+}
+</pre>
+</p>
+<li><b>定石登録関数の追加</b>
+<p>
+定石登録関数opening_initialize()を記述します。<br>
+この関数では棋譜ファイルを読み込んで定石ファイルを出力します。<br>
+</p>
+<p>
+棋譜とは対局中に打たれた手の記録のことです。<br>
+棋譜ファイルは以下のようになっています。<br>
+</p>
+<p>
+<pre>
+F5D6C3D3C4F4C5B3C2E6C6B4
+0
+F5D6C3D3C4F4C5B3C2B4E3E6
+0
+
+（中略）
+
+F5F4E3F6D3C4F3
+6.0
+F5F4E3D6F3G4E6
+6.0
+</pre>
+</p>
+<p>
+１行目に棋譜、２行目にその評価値、以下同様に棋譜と評価値を記述しています。<br>
+評価値は黒から見た値で１石勝ちの見込みなら1.0とします。<br>
+サンプルコードには"open_trans.txt"が棋譜ファイルとして付属しています。<br>
+</p>
+<p>
+それではopening_initialize()の内部を見ていきましょう。<br>
+</p>
+<p>
+<pre>
+static void opening_initialize(Board *board, Opening *opening)
+{
+	FILE *fp;
+	char buffer[TRANSCRIPT_SIZE], value_buffer[BUFFER_SIZE];
+	PositionInfo info;
+	int color, turn, value, min;
+	int history_move[BOARD_SIZE * BOARD_SIZE * 2];
+	int i;
+
+	fp = fopen(OPENING_TRANSCRIPT_FILE, "r");
+	if (!fp) {
+		return;
+	}
+	while (1) {
+</pre>
+</p>
+<p>
+最初に棋譜ファイルを開きます。<br>
+以降の処理はファイル読み込みが完了するまで続きます。<br>
+</p>
+<p>
+<pre>
+		Board_Clear(board);
+		color = BLACK;
+		turn = 0;
+		if (!get_stream(buffer, TRANSCRIPT_SIZE, fp)) {
+			break;
+		}
+		if (!get_stream(value_buffer, BUFFER_SIZE, fp)) {
+			break;
+		}
+		value = (int)(atof(value_buffer) * DISK_VALUE);
+</pre>
+<p>
+盤面を初期化した後、棋譜データと評価値を読み込みます。<br>
+</p>
+<p>
+<pre>
+		for (i = 0; buffer[i] != '\0' &amp;&amp; buffer[i + 1] != '\0'; i += 2) {
+			if (!Board_CanPlay(board, color)) {
+				history_move[turn] = PASS;
+			} else {
+				history_move[turn] = Board_Pos(tolower(buffer[i]) - 'a', buffer[i + 1] - '1');
+				if (!Board_Flip(board, color, history_move[turn])) {
+					break;
+				}
+			}
+			turn++;
+			color = Board_OpponentColor(color);
+		}
+		history_move[turn] = NOMOVE;
+</pre>
+</p>
+<p>
+棋譜にしたがって着手を行ないます。<br>
+また何手目にどこに着手したかも記録しておきます。<br>
+</p>
+<p>
+<pre>
+		for (; turn >= 0; turn--) {
+			if (color == BLACK) {
+				min = -value;
+			} else {
+				min = value;
+			}
+			if (history_move[turn] == PASS) {
+				if (Opening_Info(opening, board, Board_OpponentColor(color), &amp;info)) {
+					min = PositionInfo_Value(&amp;info);
+				}
+			} else {
+				for (i = A1; i <= H8; i++) {
+					if (Board_Flip(board, color, i)) {
+						if (Opening_Info(opening, board, Board_OpponentColor(color), &amp;info)) {
+							if (PositionInfo_Value(&amp;info) < min) {
+								min = PositionInfo_Value(&amp;info);
+							}
+						}
+						Board_Unflip(board);
+					}
+				}
+			}
+			PositionInfo_SetValue(&amp;info, -min);
+			Opening_SetInfo(opening, board, color, &amp;info);
+			Board_Unflip(board);
+			color = Board_OpponentColor(color);
+		}
+</pre>
+</p>
+<p>
+１手ずつ戻しながら、各局面の局面データ登録を行ないます。<br>
+このとき注意しなければならないのは、局面の評価値の計算です。<br>
+ある局面（局面Ａとします）の評価値は、定石データ内部でMinMax法を行なって決めます。<br>
+つまり、相手が定石データ内の最善手を打った場合の評価値をその局面の評価値とします。<br>
+具体的には以下のようになります。<br>
+</p>
+<p>
+(1)局面Ａから１手進めた局面を列挙する。<br>
+(2)(1)の局面のうち、定石データに登録されている局面を列挙する。<br>
+(3)(2)の局面のうち、最善の評価となる局面を選ぶ。<br>
+(4)局面Ａの評価値は(3)の手の評価値とする。<br>
+</ol>
+</p>
+<p>
+ただし、１手進めた局面が１つも登録されていない場合には、棋譜ファイルに記述されている評価値をその局面の評価値とします。<br>
+</p>
+<p>
+<pre>
+	}
+	fclose(fp);
+	Opening_Save(opening, OPENING_FILE);
+	printf("登録完了しました\n");
+}
+</pre>
+</p>
+<p>
+棋譜ファイルの読み込みが終わったら終了です。<br>
+</p>
+<li><b>main関数の修正</b>
+<p>
+定石登録モードを追加し、opening_initialize()を呼べるようにします。<br>
+</p>
+<p>
+<pre>
+int main(int argc, char **argv)
+{
+	MainParam param;
+	char buffer[BUFFER_SIZE];
+
+	srand((unsigned)time(NULL));
+	if (!main_param_initialize(&amp;param)) {
+		printf("初期化に失敗しました\n");
+		return 0;
+	}
+
+	while (1) {
+<font color="red">		printf("モードを選択してください (1:対戦 2:学習 3:定石登録 q:終了)\n");</font>
+		get_stream(buffer, BUFFER_SIZE, stdin);
+		if (!strcmp(buffer, "1")) {
+			play(param.Board, param.Com);
+		} else if (!strcmp(buffer, "2")) {
+			learn(param.Board, param.Evaluator, param.Com);
+<font color="red">		} else if (!strcmp(buffer, "3")) {
+			opening_initialize(param.Board, param.Opening);</font>
+		} else if (!strcmp(buffer, "q")) {
+			break;
+		}
+	}
+
+	main_param_finalize(&amp;param);
+
+	return 0;
+}
+</pre>
+</p>
+</ul>
+<p>
+それでは実際に対局してみましょう。<br>
+コンピュータが序盤で打つ手が一通りでなくなっています。<br>
+"open_trans.txt"に棋譜を追加すれば、もっと多くの定石を打つことができるようになります。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="6_6.html">＜前へ＞</a>
+<a href="7_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

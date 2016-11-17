@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background = "img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<p>
+<table width="600" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>リバーシプログラムの作り方</b>
+</font>
+</td>
+</tr>
+</table>
+<ul>
+</p>
+<p>
+<li><b>序章</b></a>
+<ul>
+<li><a href="html/0_1.html"><b>はじめに</b></a>
+<li><a href="html/0_2.html"><b>リバーシのルール</b></a>
+<li><a href="html/0_3.html"><b>ソースコードの記述について</b></a>
+</ul>
+</p>
+<p>
+<li><b>第１章 盤面の処理</b>
+<ul>
+<li><a href="html/1_1.html"><b>1.1 定数と関数の定義</b></a>
+<li><a href="html/1_2.html"><b>1.2 盤面の生成、初期化</b></a>
+<li><a href="html/1_3.html"><b>1.3 石を返す処理</b></a>
+<li><a href="html/1_4.html"><b>1.4 返せる石数を調べる処理</b></a>
+<li><a href="html/1_5.html"><b>1.5 盤面をコピー、反転させる処理</b></a>
+<li><a href="html/1_6.html"><b>1.6 その他の盤面処理</b></a>
+<li><a href="html/1_7.html"><b>1.7 盤面の操作と表示</b></a>
+</ul>
+</p>
+<p>
+<li><b>第２章 ゲーム木と探索</b>
+<ul>
+<li><a href="html/2_1.html"><b>2.1 コンピュータ思考の関数定義</b></a>
+<li><a href="html/2_2.html"><b>2.2 各関数の実装</b></a>
+<li><a href="html/2_3.html"><b>2.3 ゲーム木</b></a>
+<li><a href="html/2_4.html"><b>2.4 MinMax法とNegaMax法</b></a>
+<li><a href="html/2_5.html"><b>2.5 αβ法</b></a>
+</ul>
+</p>
+<p>
+<li><b>第３章 盤面の評価</b>
+<ul>
+<li><a href="html/3_1.html"><b>3.1 評価関数の定義</b></a>
+<li><a href="html/3_2.html"><b>3.2 パターンによる局面評価</b></a>
+<li><a href="html/3_3.html"><b>3.3 評価クラスの構造</b></a>
+<li><a href="html/3_4.html"><b>3.4 評価クラスの生成とファイルの読み書き</b></a>
+<li><a href="html/3_5.html"><b>3.5 評価関数の実装</b></a>
+<li><a href="html/3_6.html"><b>3.6 評価パラメータの更新</b></a>
+<li><a href="html/3_7.html"><b>3.7 中盤の探索</b></a>
+<li><a href="html/3_8.html"><b>3.8 自己対局による学習</b></a>
+</ul>
+</p>
+<p>
+<li><b>第４章 性能改善</b>
+<ul>
+<li><a href="html/4_1.html"><b>4.1 石数取得の高速化</b></a>
+<li><a href="html/4_2.html"><b>4.2 着手の高速化</b></a>
+<li><a href="html/4_3.html"><b>4.3 候補手リストの導入</b></a>
+<li><a href="html/4_4.html"><b>4.4 終盤探索のリーフ展開</b></a>
+<li><a href="html/4_5.html"><b>4.5 候補手の並び替え</b></a>
+<li><a href="html/4_6.html"><b>4.6 評価パラメータ更新の改善</b></a>
+</ul>
+</p>
+<p>
+<li><b>第５章 着手毎のパターン更新</b>
+<ul>
+<li><a href="html/5_1.html"><b>5.1 パターン更新も含めた着手</b></a>
+<li><a href="html/5_2.html"><b>5.2 パターンの初期化</b></a>
+<li><a href="html/5_3.html"><b>5.3 着手時のパターン更新</b></a>
+<li><a href="html/5_4.html"><b>5.4 評価と探索の修正</b></a>
+</ul>
+</p>
+<p>
+<li><b>第６章 定石</b>
+<ul>
+<li><a href="html/6_1.html"><b>6.1 定石関連関数の定義</b></a>
+<li><a href="html/6_2.html"><b>6.2 定石クラスの構造と生成</b></a>
+<li><a href="html/6_3.html"><b>6.3 定石データの読み書き</b></a>
+<li><a href="html/6_4.html"><b>6.4 局面の比較</b></a>
+<li><a href="html/6_5.html"><b>6.5 局面情報の取得と登録</b></a>
+<li><a href="html/6_6.html"><b>6.6 定石の探索</b></a>
+<li><a href="html/6_7.html"><b>6.7 定石の登録</b></a>
+</ul>
+</p>
+<p>
+<li><b>第７章 前向き枝刈り</b>
+<ul>
+<li><a href="html/7_1.html"><b>7.1 単純な枝刈り</b></a>
+<li><a href="html/7_2.html"><b>7.2 Multi Prob Cut (MPC)</b></a>
+<li><a href="html/7_3.html"><b>7.3 MPCを使用した探索</b></a>
+<li><a href="html/7_4.html"><b>7.4 MPCパラメータの計算</b></a>
+</ul>
+</p>
+<p>
+<li><b>第８章 置換表</b>
+<ul>
+<li><a href="html/8_1.html"><b>8.1 置換表の関数定義</b></a>
+<li><a href="html/8_2.html"><b>8.2 ハッシュ法</b></a>
+<li><a href="html/8_3.html"><b>8.3 ハッシュ関数の実装</b></a>
+<li><a href="html/8_4.html"><b>8.4 置換表の構造と生成</b></a>
+<li><a href="html/8_5.html"><b>8.5 局面の登録と取得</b></a>
+<li><a href="html/8_6.html"><b>8.6 置換表を使用した探索</b></a>
+<li><a href="html/8_7.html"><b>8.7 その他の処理と効果の検証</b></a>
+</ul>
+</p>
+<p>
+<li><a href="html/future.html"><b>課題と改善点</b></a>
+</p>
+<p>
+<li><a href="html/bibliography.html"><b>参考文献</b></a>
+</p>
+<p>
+<li><a href="html/epilogue.html"><b>おわりに</b></a>
+</p>
+</ul>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

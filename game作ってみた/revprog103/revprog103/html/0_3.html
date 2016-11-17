@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="0_2.html">＜前へ＞</a>
+<a href="1_1.html">＜次へ＞</a>
+<table width="600" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>ソースコードの記述について</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+付属ソースコードの記述、主に命名規則について述べます。<br>
+付属ソースコードはsrcフォルダの下にあります。<br>
+章、節番号がsrcフォルダの下にあるフォルダの名前に対応しています。<br>
+章全体に対応している場合には<b>Chapter(章番号)</b>、
+節に対応している場合には<b>Chapter(章番号)_(節番号)</b>となっています。<br>
+</p>
+<ul>
+<li><b>型</b>
+<p>
+型名は大文字で開始した単語を連結します。<br>
+例：MainParam<br>
+</p>
+<li><b>定数</b>
+<p>
+定数名は全て大文字で書き、単語間に<b>"_"</b>を挿入します。<br>
+例：BUFFER_SIZE
+</p>
+<li><b>ローカル変数</b>
+<p>
+ローカル変数は全て小文字で書き、単語間に<b>"_"</b>を挿入します。<br>
+例：max_value<br>
+</p>
+<li><b>仮引数</b>
+<p>
+仮引数は全て小文字で書き、単語間に<b>"_"</b>を挿入します。<br>
+さらに以下のルールを適用します。<br>
+<p>
+<ul>
+<li>入力時の引数の内容を参照するだけで、出力時に引数の内容が変わらないもの
+<p>
+<b>"in_"</b>で開始します。<br>
+</p>
+<li>入力時の引数の内容を参照せず、出力時に引数に値が格納されるもの
+<p>
+<b>"out_"</b>で開始します。<br>
+</p>
+<li>入力時の引数の内容を参照し、さらに出力時に引数の内容が変わるもの
+<p>
+接頭辞はつけません。
+</p>
+<li>クラスのインスタンス
+<p>
+<b>self</b>と記述します。
+</p>
+</ul>
+</p>
+<li><b>メンバ変数</b>
+<p>
+構造体のメンバ変数名は大文字で開始した単語を連結します。<br>
+例：MinDepth<br>
+</p>
+<li><b>関数名</b>
+<p>
+ソースコードには、盤面処理、盤面評価等の処理が機能毎にクラスとして記述されています。<br>
+クラス関数は以下のように記述します。<br>
+</p>
+<p>
+<b>"クラス名"_"メンバ関数名"</b>
+</p>
+<p>
+クラス名とメンバ関数名は大文字で開始します。<br>
+複数の単語を並べる場合には単語の頭文字を大文字にして単語を連結します。<br>
+例：Board_CountDisks()<br>
+</p>
+<p>
+クラスに属さない関数は全て小文字で書き、単語間に"_"を挿入します。<br>
+例：print_board()
+</p>
+<li><b>その他</b>
+<p>
+解説中のソースコードは、特に断りがなければ関数または処理全体の追加、変更について記述しています。<br>
+部分的な追加、変更を行なう場合にはその部分を<font color="red">赤</font>で強調してあります。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="0_2.html">＜前へ＞</a>
+<a href="1_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

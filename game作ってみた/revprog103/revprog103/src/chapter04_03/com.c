@@ -1,0 +1,257 @@
+#include "com.h"
+#include "board.h"
+#include "evaluator.h"
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX_VALUE	(DISK_VALUE * 200)
+
+typedef struct _MoveList MoveList;
+struct _MoveList
+{
+	MoveList *Prev;
+	MoveList *Next;
+	int Pos;
+};
+
+struct _Com
+{
+	Board *Board;
+	Evaluator *Evaluator;
+	int MidDepth;
+	int WLDDepth;
+	int ExactDepth;
+	int Node;
+	MoveList Moves[BOARD_SIZE * BOARD_SIZE];
+};
+
+static int Com_Initialize(Com *self, Evaluator *evaluator);
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move);
+static int Com_EndSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move);
+static void Com_MakeList(Com *self);
+static void RemoveList(MoveList *self);
+static void RecoverList(MoveList *self);
+
+static int Com_Initialize(Com *self, Evaluator *evaluator)
+{
+	memset(self, 0, sizeof(Com));
+	self->Board = Board_New();
+	if (!self->Board) {
+		return 0;
+	}
+	self->Evaluator = evaluator;
+	if (!self->Evaluator) {
+		return 0;
+	}
+	self->MidDepth = 1;
+	self->WLDDepth = 1;
+	self->ExactDepth = 1;
+	self->Node = 0;
+	return 1;
+}
+
+Com *Com_New(Evaluator *evaluator)
+{
+	Com *self;
+	self = malloc(sizeof(Com));
+	if (self) {
+		if (!Com_Initialize(self, evaluator)) {
+			Com_Delete(self);
+			self = NULL;
+		}
+	}
+	return self;
+}
+
+void Com_Delete(Com *self)
+{
+	if (self->Board) {
+		Board_Delete(self->Board);
+	}
+	free(self);
+}
+
+void Com_SetLevel(Com *self, int in_mid, int in_exact, int in_wld)
+{
+	self->MidDepth = in_mid;
+	self->WLDDepth = in_wld;
+	self->ExactDepth = in_exact;
+}
+
+int Com_NextMove(Com *self, const Board *in_board, int in_color, int *out_value)
+{
+	int result;
+	int left;
+	int value;
+	int color;
+
+	Board_Copy(in_board, self->Board);
+	self->Node = 0;
+	left = Board_CountDisks(self->Board, EMPTY);
+	Com_MakeList(self);
+	if (left <= self->ExactDepth) {
+		value = Com_EndSearch(self, left, -BOARD_SIZE * BOARD_SIZE, BOARD_SIZE * BOARD_SIZE, in_color, Board_OpponentColor(in_color), 0, &result);
+		value *= DISK_VALUE;
+	} else if (left <= self->WLDDepth) {
+		value = Com_EndSearch(self, left, -BOARD_SIZE * BOARD_SIZE, 1, in_color, Board_OpponentColor(in_color), 0, &result);
+		value *= DISK_VALUE;
+	} else {
+		if ((in_color == WHITE && self->MidDepth % 2 == 0) ||
+			(in_color == BLACK && self->MidDepth % 2 == 1)) {
+			Board_Reverse(self->Board);
+			color = Board_OpponentColor(in_color);
+		} else {
+			color = in_color;
+		}
+		value = Com_MidSearch(self, self->MidDepth, -MAX_VALUE, MAX_VALUE, color, Board_OpponentColor(color), 0, &result);
+	}
+	if (out_value) {
+		*out_value = value;
+	}
+
+	return result;
+}
+
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Evaluator_Value(self->Evaluator, self->Board);
+	}
+	*out_move = NOMOVE;
+	for (p = self->Moves->Next; p; p = p->Next) {
+		if (Board_Flip(self->Board, in_color, p->Pos)) {
+			if (!can_move) {
+				*out_move = p->Pos;
+				can_move = 1;
+			}
+			value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &move);
+			Board_Unflip(self->Board);
+			if (value > max) {
+				max = value;
+				*out_move = p->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	}
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			max = DISK_VALUE * (Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent));
+		} else {
+			*out_move = PASS;
+			max = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 1, &move);
+		}
+	}
+	return max;
+}
+
+static int Com_EndSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+	}
+	*out_move = NOMOVE;
+	for (p = self->Moves->Next; p; p = p->Next) {
+		if (Board_Flip(self->Board, in_color, p->Pos)) {
+			RemoveList(p);
+			if (!can_move) {
+				*out_move = p->Pos;
+				can_move = 1;
+			}
+			value = -Com_EndSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &move);
+			Board_Unflip(self->Board);
+			RecoverList(p);
+			if (value > max) {
+				max = value;
+				*out_move = p->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	}
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			max = Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+		} else {
+			*out_move = PASS;
+			max = -Com_EndSearch(self, in_depth, -in_beta, -max, in_opponent, in_color, 1, &move);
+		}
+	}
+	return max;
+}
+
+int Com_CountNodes(const Com *self)
+{
+	return self->Node;
+}
+
+static void Com_MakeList(Com *self)
+{
+	int pos_list[] = {
+		A1, A8, H8, H1,
+		D3, D6, E3, E6, C4, C5, F4, F5,
+		C3, C6, F3, F6,
+		D2, D7, E2, E7, B4, B5, G4, G5,
+		C2, C7, F2, F7, B3, B6, G3, G6,
+		D1, D8, E1, E8, A4, A5, H4, H5,
+		C1, C8, F1, F8, A3, A6, H3, H6,
+		B2, B7, G2, G7,
+		B1, B8, G1, G8, A2, A7, H2, H7,
+		D4, D5, E4, E5,
+		NOMOVE
+	};
+	int i;
+	MoveList *prev;
+
+	prev = self->Moves;
+	prev->Pos = NOMOVE;
+	prev->Prev = NULL;
+	prev->Next = NULL;
+	for (i = 0; pos_list[i] != NOMOVE; i++) {
+		if (Board_Disk(self->Board, pos_list[i]) == EMPTY) {
+			prev[1].Pos = pos_list[i];
+			prev[1].Prev = prev;
+			prev[1].Next = NULL;
+			prev->Next = &prev[1];
+			prev++;
+		}
+	}
+}
+
+static void RemoveList(MoveList *self)
+{
+	if (self->Prev) {
+		self->Prev->Next = self->Next;
+	}
+	if (self->Next) {
+		self->Next->Prev = self->Prev;
+	}
+}
+
+static void RecoverList(MoveList *self)
+{
+	if (self->Prev) {
+		self->Prev->Next = self;
+	}
+	if (self->Next) {
+		self->Next->Prev = self;
+	}
+}

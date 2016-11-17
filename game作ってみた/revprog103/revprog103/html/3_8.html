@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="3_7.html">＜前へ＞</a>
+<a href="4_1.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>3.8 自己対局による学習</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+前節までに評価関数の実装と、評価関数を使用した中盤探索の実行を行いました。<br>
+しかし、まだ肝心の評価パラメータには全く手をつけていません。<br>
+本節では評価パラメータの調整を行う方法を説明します。<br>
+</p>
+<p>
+この処理は"main.c"のlearn()関数に記述されています。<br>
+この関数は長いので少しずつ見ていきましょう。
+</p>
+<ul>
+<li><b>初期設定</b>
+<p>
+learn()の最初は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+static void learn(Board *board, Evaluator *evaluator, Com *com)
+{
+	char buffer[BUFFER_SIZE];
+	int history_color[BOARD_SIZE * BOARD_SIZE];
+	int i, j, move, num, turn, value;
+	int color;
+	int result;
+
+	printf("対戦回数を入力してください\n");
+	get_stream(buffer, BUFFER_SIZE, stdin);
+	num = atoi(buffer);
+
+	Com_SetLevel(com, 4, 12, 12);
+	for (i = 0; i < num; i++) {
+</pre>
+<p>
+まず最初に対戦回数を入力します。<br>
+これはコンピュータ同士で対戦を行う回数を意味しています。<br>
+learn()では、コンピュータ同士で何回も対戦を行い、対戦結果に基づいて評価パラメータの調整を行います。<br>
+</p>
+<p>
+入力が終わると、コンピュータの強さを設定します。<br>
+適切な調整を行うためには深い探索を行ったほうがよいのですが、それでは時間がかかってしまいます。<br>
+ここでは中盤４手読み、終盤１２手読みとしました。<br>
+</p>
+<p>
+以降の処理は、入力した対戦回数だけ繰り返します。
+</p>
+<li><b>自己対局</b>
+<p>ループの最初は、コンピュータ同士の対局です。
+<pre>
+		Board_Clear(board);
+		color = BLACK;
+		turn = 0;
+		for (j = 0; j < 8; j++) {
+			if (Board_CanPlay(board, color)) {
+				move_random(board, color);
+				history_color[turn] = color;
+				turn++;
+			}
+			color = Board_OpponentColor(color);
+		}
+		while (1) {
+			if (Board_CanPlay(board, color)) {
+				if (Board_CountDisks(board, EMPTY) > 12 &amp;&amp; get_rand(100) < 1) {
+					move_random(board, color);
+				} else {
+					move = Com_NextMove(com, board, color, &amp;value);
+					Board_Flip(board, color, move);
+				}
+				history_color[turn] = color;
+				turn++;
+			} else if (!Board_CanPlay(board, Board_OpponentColor(color))) {
+				break;
+			}
+			color = Board_OpponentColor(color);
+		}
+</pre>
+</p>
+<p>
+まず最初に盤面を初期化します。<br>
+次に、最初の８手はランダムな手を打ちます。<br>
+その後はコンピュータに思考を行わせて手を選ぶのですが、1%の確率でランダムな着手を行うようにします。<br>
+ランダムな手を打つようにすることで「これまで悪いと思っていたが実は好手」というような手を発見しやすくします。<br>
+</p>
+<li><b>評価値の更新</b>
+<p>
+対局が終了したら、評価値の更新を行います。<br>
+</p>
+<p>
+<pre>
+		result = (Board_CountDisks(board, BLACK) - Board_CountDisks(board, WHITE)) * DISK_VALUE;
+		for (j = Board_CountDisks(board, EMPTY); j < 8; j++) {
+			turn--;
+			Board_Unflip(board);
+		}
+		for (j = Board_CountDisks(board, EMPTY); j < BOARD_SIZE * BOARD_SIZE - 12; j++) {
+			turn--;
+			Board_Unflip(board);
+			if (history_color[turn] == BLACK) {
+				Evaluator_Update(evaluator, board, result);
+			} else {
+				Board_Reverse(board);
+				Evaluator_Update(evaluator, board, -result);
+				Board_Reverse(board);
+			}
+		}
+</pre>
+</p>
+<p>
+最初に、対局結果を取得します。<br>
+次に、空きマスの数が８個以上になるまで手を戻します。<br>
+空きマスが少ない局面では、通常終盤探索が行われるので評価関数を使用することはありません。<br>
+評価関数を行わない局面をパラメータ調整に使っても意味がないため、
+</p>
+<p>
+次のループ処理では、１手ずつ手を戻し、そのときの局面を使って評価パラメータの更新を行っています。<br>
+局面の評価値としては対局結果をそのまま使用しています。<br>
+白番で局面を反転させているのは、パラメータ調整に使う局面を黒番でそろえるためです。<br>
+</p>
+<p>
+８手目の局面まで戻したらループから抜けます。<br>
+８手目まではランダムに着手しているので、パラメータ調整のデータとしてはふさわしくないためです。<br>
+</p>
+<li><b>評価パラメータの保存</b>
+<p>
+最後に評価パラメータの保存を行います。<br>
+１００回対局を行う毎に評価パラメータを保存します。<br>
+</p>
+<p>
+<pre>
+		if ((i + 1) % 100 == 0) {
+			printf("学習中... %d / %d\r", i + 1 , num );
+			Evaluator_Save(evaluator, EVALUATOR_FILE);
+		}
+	}
+	Evaluator_Save(evaluator, EVALUATOR_FILE);
+	printf("終了しました");
+}
+</pre>
+</p>
+<li><b>強化学習</b>
+<p>
+上記の処理では終局時の石差がプラスである場合には、対局中に現れる局面も良い局面として扱い、<br>
+マイナスである場合には対局中に現れる局面も悪い局面として扱っています。<br>
+良い局面の評価値が高く、悪い局面の評価値が低くなるようにパラメータを更新することで、<br>
+コンピュータが勝ちを目指すような（もっと言うと石差を最大にするような）手を打つようになることが期待されます。<br>
+</p>
+<p>
+このように、報酬（ここでは終局時の石差）を最大化にするための行動を学習することを<b>強化学習</b>と呼びます。<br>
+本節では、強化学習のうち<b>モンテカルロ法</b>を使用しました。<br>
+モンテカルロ法では、最終結果だけを使用して学習を行なうという特徴があります。<br>
+</p>
+<p>
+ここでは強化学習の詳細には触れませんが、最終結果だけではなく例えば中盤探索の評価値を学習に使用することもできます。<br>
+興味のある方は調べてみてください。<br>
+</p>
+<li><b>学習と対局</b>
+<p>
+では実際に学習を行なってみましょう。<br>
+10万局程対局を重ねればある程度強くなると思います。<br>
+筆者の環境（CPU: AthronXP 2600+）では半日程で10万局を処理できました。<br>
+</p>
+<p>
+学習が終了したら、対局を行なってみましょう。<br>
+強くなっているでしょうか？<br>
+次章では学習の改善も含めた性能の改善を行ないます。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="3_7.html">＜前へ＞</a>
+<a href="4_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

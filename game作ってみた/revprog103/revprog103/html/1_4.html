@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_3.html">＜前へ＞</a>
+<a href="1_5.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.4 返せる石数を調べる処理</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では実際には石を返さずに、何石返るのかを調べる処理について説明します。<br>
+この関数を使うのは後になってからですが、何石返るのかを調べるだけなら、１手戻す処理がない分実際に石を返すよりも高速です。<br>
+また、着手できるかどうかの判定にも使用できます。<br>
+</p>
+<ul>
+<li><b>１方向に対して返せる石数を調べる処理</b><br>
+<p>
+返せる石数を調べるBoard_CountFlips()は、Board_Flip()と同様に１方向に対して返せる石数を調べる関数を全方向に対して呼び出します。<br>
+まずはこの１方向に対して返せる石数を調べる関数Board_CountFlipsLine()を見てみましょう。<br>
+<pre>
+static int Board_CountFlipsLine(const Board *self, int in_color, int in_pos, int in_dir)
+{
+	int result = 0;
+	int op = OPPONENT_COLOR(in_color);
+	int pos;
+
+	for (pos = in_pos + in_dir; self->Disk[pos] == op; pos += in_dir) {
+		result++;
+	}
+	if (self->Disk[pos] != in_color) {
+		return 0;
+	}
+
+	return result;
+}
+</pre>
+</p>
+<p>
+Board_FlipLine()と処理が似ているので、何をしているのかはすぐにわかると思います。<br>
+違うのは最初のforループで石数を数えている点と、石を返す処理がない点です。<br>
+</p>
+<li><b>返せる石数を調べる処理</b>
+<p>
+それでは返せる石数を調べる処理Board_CountFlips()を見てみましょう。<br>
+<pre>
+int Board_CountFlips(const Board *self, int in_color, int in_pos)
+{
+	int result = 0;
+
+	if (self->Disk[in_pos] != EMPTY) {
+		return 0;
+	}
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_UP_LEFT);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_UP);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_UP_RIGHT);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_LEFT);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_RIGHT);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_DOWN);
+	result += Board_CountFlipsLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+
+	return result;
+}
+</pre>
+</p>
+<p>
+これもBoard_Flip()と似ています。<br>
+石を返す処理がない分Board_Flip()よりも処理が少なくなっています。<br>
+行っているのは、全方向に対してBoard_CountFlipsLine()を呼び出し、戻り値を足しているだけです。<br>
+</p>
+<li><b>着手できるかどうか調べる処理</b>
+<p>
+次に着手できるかどうか調べる関数Board_CanFlip()を見てみましょう。<br>
+<pre>
+int Board_CanFlip(const Board *self, int in_color, int in_pos)
+{
+	if (self->Disk[in_pos] != EMPTY) {
+		return 0;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_UP_LEFT)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_UP)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_UP_RIGHT)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_LEFT)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_RIGHT)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_DOWN_LEFT)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_DOWN)) {
+		return 1;
+	}
+	if (Board_CountFlipsLine(self, in_color, in_pos, DIR_DOWN_RIGHT)) {
+		return 1;
+	}
+
+	return 0;
+}
+</pre>
+</p>
+<p>
+各方向に対してBoard_CountFlipsLine()を呼び出しているだけです。<br>
+そしてどれか１方向でも石を返せるならば１を返し、どの方向にも石を返せない場合には０を返します。<br>
+</p>
+<li><b>着手可能かどうかを調べる処理</b>
+<p>
+本節の最後は、着手可能かどうかを調べる関数Board_CanPlay()です。<br>
+<pre>
+int Board_CanPlay(const Board *self, int in_color)
+{
+	int x, y;
+
+	for (x = 0; x < BOARD_SIZE; x++) {
+		for (y = 0; y < BOARD_SIZE; y++) {
+			if (Board_CanFlip(self, in_color, Board_Pos(x, y))) {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+</pre>
+</p>
+<p>
+各マスに対して着手できるかどうかを調べているだけです。
+本節は、前節の内容に比べると簡単だったと思います。
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_3.html">＜前へ＞</a>
+<a href="1_5.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

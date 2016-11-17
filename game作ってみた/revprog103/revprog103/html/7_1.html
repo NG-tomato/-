@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="6_7.html">＜前へ＞</a>
+<a href="7_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>7.1 単純な枝刈り</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章では前向き枝刈りについて説明します。<br>
+</p>
+<ul>
+<li><b>枝刈り</b>
+<p>
+<b>枝刈り</b>とは、探索ノードを減らす手法を指します。<br>
+枝刈りを行なってもMinMax法と同じ結果が得られる枝刈り手法を<b>後向き枝刈り</b>、
+必ずしもMinMax法と同じ結果が得られない枝刈り手法を<b>前向き枝刈り</b>といいます。<br>
+αβ法は、後向き枝刈りです。<br>
+</p>
+<p>
+後向き枝刈りは、MinMax法と同じ結果が得られる代わりに減らせる探索ノード数が限定されます。<br>
+前向き枝刈りは、後向き枝刈りよりも多くの探索ノード数を減らせる可能性がありますが、探索の精度が落ちます。<br>
+</p>
+<p>
+前向き枝刈りの基本方針は、「そのノードの評価値がα以下またはβ以上になりそうだったら探索を打ち切る」というものです。<br>
+「α値以下またはβ値以上になりそう」であることの判定方法はいくつかあります。<br>
+本節では、以下のような単純なアルゴリズムによる枝刈りを実装してみます。<br>
+</p>
+<p>
+<ul>
+<li>探索の残り手数が一定以上のノードで、静的評価を行なう
+<li>静的評価による評価値がα値－一定値以下の場合には、そのノードの評価値をα値として探索を打ち切る
+<li>静的評価による評価値がβ値＋一定値以上の場合には、そのノードの評価値をβ値として探索を打ち切る
+</ul>
+</p>
+<li><b>枝刈り基準の定義</b>
+<p>
+それでは実装を行ないます。<br>
+修正するファイルは"com.c"です。<br>
+</p>
+<p>
+最初に枝刈り基準の定義を行ないます。<br>
+静的評価による評価値がα値－CUT_WIDTH以下またはβ値＋CUT_WIDTH以上の場合に探索を打ち切ります。<br>
+ここではDISK_VALUEの10倍の値としていますが、明確な根拠があるわけではありません。<br>
+適切な枝刈り基準の決め方については次節以降で説明します。<br>
+</p>
+<p>
+<pre>
+#define CUT_WIDTH	(DISK_VALUE * 10)
+</pre>
+</p>
+<li><b>枝刈り処理の実装</b>
+<p>
+次に中盤探索関数Com_MidSearchを修正します。<br>
+</p>
+<p>
+<pre>
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+
+	（中略）
+
+	if (in_depth > 2) {
+		info_num = Com_Sort(self, in_color, info);
+		if (info_num > 0) {
+			<font color="red">if (info[0].Value <= in_alpha - CUT_WIDTH) {
+				return in_alpha;
+			} else if (info[0].Value >= in_beta + CUT_WIDTH) {
+				return in_beta;
+			}</font>
+			*out_move = info[0].Move->Pos;
+			can_move = 1;
+		}
+		for (i = 0; i < info_num; i++) {
+			Board_FlipPattern(self->Board, in_color, info[i].Move->Pos);
+			RemoveList(info[i].Move);
+			value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+			Board_UnflipPattern(self->Board);
+			RecoverList(info[i].Move);
+			if (value > max) {
+				max = value;
+				*out_move = info[i].Move->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	} else {
+
+	（中略）
+
+}
+</pre>
+</p>
+<p>
+inf[0].Valueがα値以下またはβ値以上になるかどうかを調べています。<br>
+inf[0].Valueは一手読みによる評価値なので静的評価ではありませんが、特に問題ではありません。<br>
+</p>
+<li><b>導入結果</b>
+<p>
+前向き枝刈りを導入しないプログラム（以下枝刈りありプログラム）と導入したプログラム（以下枝刈りなしプログラム）とで対局を行ないました。<br>
+結果は以下のようになりました。<br>
+</p>
+<p>
+中盤手数 +0
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>4</td><td>48</td><td>0.909</td><td>0.817</td></tr>
+<tr align = "right"><td>6</td><td>34</td><td>0.548</td><td>0.529</td></tr>
+<tr align = "right"><td>8</td><td>32</td><td>0.308</td><td>0.294</td></tr>
+<tr align = "right"><td>10</td><td>32</td><td>0.165</td><td>0.152</td></tr>
+</table>
+</p>
+<p>
+中盤手数 +1
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>4</td><td>73</td><td>3.11</td><td>2.58</td></tr>
+<tr align = "right"><td>6</td><td>64</td><td>1.56</td><td>1.39</td></tr>
+<tr align = "right"><td>8</td><td>44</td><td>0.763</td><td>0.705</td></tr>
+<tr align = "right"><td>10</td><td>37</td><td>0.391</td><td>0.358</td></tr>
+</table>
+</p>
+<p>
+中盤手数 +2
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>4</td><td>79</td><td>5.51</td><td>5.05</td></tr>
+<tr align = "right"><td>6</td><td>67</td><td>2.96</td><td>2.83</td></tr>
+<tr align = "right"><td>8</td><td>59</td><td>1.53</td><td>1.49</td></tr>
+<tr align = "right"><td>10</td><td>40</td><td>0.795</td><td>0.741</td></tr>
+</table>
+</p>
+<p>
+中盤手数 +3
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>4</td><td>96</td><td>16.0</td><td>14.2</td></tr>
+<tr align = "right"><td>6</td><td>85</td><td>7.68</td><td>7.42</td></tr>
+<tr align = "right"><td>8</td><td>74</td><td>3.69</td><td>3.55</td></tr>
+<tr align = "right"><td>10</td><td>55</td><td>1.78</td><td>1.68</td></tr>
+</table>
+</p>
+<p>
+表の見方を説明します。<br>
+</p><p>
+<ul>
+<li><b>中盤手数 +n</b><br>
+枝刈りありプログラムが枝刈りなしプログラムより中盤でn手深く探索を行なっていることを意味します。<br>
+終盤探索の手数は同じです。<br>
+<li><b>中盤手数</b><br>
+枝刈りなしプログラムの中盤での探索手数です。<br>
+<li><b>勝率</b><br>
+枝刈りありプログラムの勝率です。<br>
+各組み合わせ毎に200局の対局を行ないました。<br>
+<li><b>ノード数比</b><br>
+中盤の探索ノード数の比です。<br>
+( 枝刈りありプログラムのノード数 ) / ( 枝刈りなしプログラムのノード数 )を意味しています。<br>
+<li><b>思考時間比</b><br>
+中盤の思考時間の比です。<br>
+( 枝刈りありプログラムの思考時間 ) / ( 枝刈りなしプログラムの思考時間 )を意味しています。<br>
+</ul>
+</p>
+<p>
+表を見ると、枝刈りありプログラムでは、枝刈りなしよりも思考時間が減少していることがわかります。<br>
+このため同じ持ち時間であれば探索手数を伸ばすことができます。<br>
+しかし、探索手数を伸ばしても勝率は上がっていません。<br>
+思考時間比が1.0以下の場合は常に勝率が50%以下になっています。<br>
+つまり前向き枝刈り導入を行なっても良い効果は得られていないことがわかります。<br>
+</p>
+</ul>
+<p>
+今回のような単純な枝刈り方法ではうまく機能しないという結果になりました。<br>
+次節では適切な前向き枝刈り方法を説明します。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="6_7.html">＜前へ＞</a>
+<a href="7_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

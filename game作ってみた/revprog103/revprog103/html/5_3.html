@@ -1,0 +1,369 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="5_2.html">＜前へ＞</a>
+<a href="5_4.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>5.3 着手時のパターン更新</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では着手時のパターン更新処理について説明します。<br>
+前節に引き続き"board.c"の修正を行ないます。<br>
+</p>
+<ul>
+<li><b>１マス毎のパターン更新</b>
+<p>
+まず１マスの状態が変わったときにパターンを更新する関数を記述します。<br>
+これは全部で６個あり、名前と役割は以下の通りです。
+</p>
+<p>
+<ul>
+<li>Board_FlipSquareBlack() 白石を黒石にする
+<li>Board_FlipSquareWhite() 黒石を白石にする
+<li>Board_PutSquareBlack() 空きマスを黒石にする
+<li>Board_PutSquareWhite() 空きマスを白石にする
+<li>Board_RemoveSquareBlack() 黒石を空きマスにする
+<li>Board_RemoveSquareWhite() 白石を空きマスにする
+</ul>
+</p>
+Board_PutSquareBlack()とBoard_PutSquareWhite()の内容については前節で触れました。<br>
+他の４個の関数の関数は以下のようになっています。<br>
+それぞれDiskの内容を関数に応じた状態にした後、マスに関連するパターンの状態を更新しています。<br>
+<p>
+<pre>
+static void Board_FlipSquareBlack(Board *self, int in_pos)
+{
+	self->Disk[in_pos] = BLACK;
+	self->Pattern[self->PatternID[in_pos][0]] -= self->PatternDiff[in_pos][0];
+	self->Pattern[self->PatternID[in_pos][1]] -= self->PatternDiff[in_pos][1];
+	self->Pattern[self->PatternID[in_pos][2]] -= self->PatternDiff[in_pos][2];
+	self->Pattern[self->PatternID[in_pos][3]] -= self->PatternDiff[in_pos][3];
+	self->Pattern[self->PatternID[in_pos][4]] -= self->PatternDiff[in_pos][4];
+	self->Pattern[self->PatternID[in_pos][5]] -= self->PatternDiff[in_pos][5];
+}
+
+static void Board_FlipSquareWhite(Board *self, int in_pos)
+{
+	self->Disk[in_pos] = WHITE;
+	self->Pattern[self->PatternID[in_pos][0]] += self->PatternDiff[in_pos][0];
+	self->Pattern[self->PatternID[in_pos][1]] += self->PatternDiff[in_pos][1];
+	self->Pattern[self->PatternID[in_pos][2]] += self->PatternDiff[in_pos][2];
+	self->Pattern[self->PatternID[in_pos][3]] += self->PatternDiff[in_pos][3];
+	self->Pattern[self->PatternID[in_pos][4]] += self->PatternDiff[in_pos][4];
+	self->Pattern[self->PatternID[in_pos][5]] += self->PatternDiff[in_pos][5];
+}
+
+static void Board_RemoveSquareBlack(Board *self, int in_pos)
+{
+	self->Disk[in_pos] = EMPTY;
+	self->Pattern[self->PatternID[in_pos][0]] -= self->PatternDiff[in_pos][0];
+	self->Pattern[self->PatternID[in_pos][1]] -= self->PatternDiff[in_pos][1];
+	self->Pattern[self->PatternID[in_pos][2]] -= self->PatternDiff[in_pos][2];
+	self->Pattern[self->PatternID[in_pos][3]] -= self->PatternDiff[in_pos][3];
+	self->Pattern[self->PatternID[in_pos][4]] -= self->PatternDiff[in_pos][4];
+	self->Pattern[self->PatternID[in_pos][5]] -= self->PatternDiff[in_pos][5];
+}
+
+static void Board_RemoveSquareWhite(Board *self, int in_pos)
+{
+	self->Disk[in_pos] = EMPTY;
+	self->Pattern[self->PatternID[in_pos][0]] -= self->PatternDiff[in_pos][0] + self->PatternDiff[in_pos][0];
+	self->Pattern[self->PatternID[in_pos][1]] -= self->PatternDiff[in_pos][1] + self->PatternDiff[in_pos][1];
+	self->Pattern[self->PatternID[in_pos][2]] -= self->PatternDiff[in_pos][2] + self->PatternDiff[in_pos][2];
+	self->Pattern[self->PatternID[in_pos][3]] -= self->PatternDiff[in_pos][3] + self->PatternDiff[in_pos][3];
+	self->Pattern[self->PatternID[in_pos][4]] -= self->PatternDiff[in_pos][4] + self->PatternDiff[in_pos][4];
+	self->Pattern[self->PatternID[in_pos][5]] -= self->PatternDiff[in_pos][5] + self->PatternDiff[in_pos][5];
+}
+</pre>
+</p>
+<li><b>着手処理</b>
+<p>
+次に着手処理を記述します。<br>
+パターン更新を行ないながら１方向に石を返す関数Board_FlipLinePattern()は以下の通りです。<br>
+</p>
+<p>
+Board_FlipLine()と似た処理ですが、石を返すときにBoard_FlipSquareBlack()またはBoard_FlipSquareWhite()を呼び出す点が異なります。<br>
+</p>
+<p>
+<pre>
+static int Board_FlipLinePattern(Board *self, int in_color, int in_pos, int in_dir)
+{
+	int result = 0;
+	int op = OPPONENT_COLOR(in_color);
+	int pos;
+	void (*func_flip)(Board *, int);
+
+	if (in_color == BLACK) {
+		func_flip = Board_FlipSquareBlack;
+	} else {
+		func_flip = Board_FlipSquareWhite;
+	}
+
+	pos = in_pos + in_dir;
+	if (self->Disk[pos] != op) {
+		return 0;
+	}
+	pos += in_dir;
+	if (self->Disk[pos] == op) {
+		pos += in_dir;
+		if (self->Disk[pos] == op) {
+			pos += in_dir;
+			if (self->Disk[pos] == op) {
+				pos += in_dir;
+				if (self->Disk[pos] == op) {
+					pos += in_dir;
+					if (self->Disk[pos] == op) {
+						pos += in_dir;
+						if (self->Disk[pos] != in_color) {
+							return 0;
+						}
+						pos -= in_dir;
+						result ++;
+						func_flip(self, pos);
+						BOARD_STACK_PUSH(self, pos);
+					} else if (self->Disk[pos] != in_color) {
+						return 0;
+					}
+					pos -= in_dir;
+					result ++;
+					func_flip(self, pos);
+					BOARD_STACK_PUSH(self, pos);
+				} else if (self->Disk[pos] != in_color) {
+					return 0;
+				}
+				pos -= in_dir;
+				result ++;
+				func_flip(self, pos);
+				BOARD_STACK_PUSH(self, pos);
+			} else if (self->Disk[pos] != in_color) {
+				return 0;
+			}
+			pos -= in_dir;
+			result ++;
+			func_flip(self, pos);
+			BOARD_STACK_PUSH(self, pos);
+		} else if (self->Disk[pos] != in_color) {
+			return 0;
+		}
+		pos -= in_dir;
+		result ++;
+		func_flip(self, pos);
+		BOARD_STACK_PUSH(self, pos);
+	} else if (self->Disk[pos] != in_color) {
+		return 0;
+	}
+	pos -= in_dir;
+	result ++;
+	func_flip(self, pos);
+	BOARD_STACK_PUSH(self, pos);
+
+	return result;
+}
+</pre>
+</p>
+<p>
+パターン更新を伴う着手関数Board_FlipPattern()は以下の通りです。<br>
+これもBoard_Flip()と似ていますが、Board_FlipLinePattern()を呼び出す点と、<br>
+着手位置に石を置くときにBoard_PutSquareBlack()または()を呼び出す点が異なります。<br>
+</p>
+<p>
+<pre>
+int Board_FlipPattern(Board *self, int in_color, int in_pos)
+{
+	int result = 0;
+
+	if (self->Disk[in_pos] != EMPTY) {
+		return 0;
+	}
+	switch (in_pos) {
+	case C1:
+	case C2:
+	case D1:
+	case D2:
+	case E1:
+	case E2:
+	case F1:
+	case F2:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	case C8:
+	case C7:
+	case D8:
+	case D7:
+	case E8:
+	case E7:
+	case F8:
+	case F7:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_RIGHT);
+		break;
+	case A3:
+	case A4:
+	case A5:
+	case A6:
+	case B3:
+	case B4:
+	case B5:
+	case B6:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	case H3:
+	case H4:
+	case H5:
+	case H6:
+	case G3:
+	case G4:
+	case G5:
+	case G6:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN);
+		break;
+	case A1:
+	case A2:
+	case B1:
+	case B2:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	case A8:
+	case A7:
+	case B8:
+	case B7:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_RIGHT);
+		break;
+	case H1:
+	case H2:
+	case G1:
+	case G2:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN);
+		break;
+	case H8:
+	case H7:
+	case G8:
+	case G7:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_LEFT);
+		break;
+	default:
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLinePattern(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	}
+	if (result > 0) {
+		if (in_color == BLACK) {
+			Board_PutSquareBlack(self, in_pos);
+		} else {
+			Board_PutSquareWhite(self, in_pos);
+		}
+		BOARD_STACK_PUSH(self, in_pos);
+		BOARD_STACK_PUSH(self, OPPONENT_COLOR(in_color));
+		BOARD_STACK_PUSH(self, result);
+		self->DiskNum[in_color] += result + 1;
+		self->DiskNum[OPPONENT_COLOR(in_color)] -= result;
+		self->DiskNum[EMPTY]--;
+	}
+
+	return result;
+}
+</pre>
+</p>
+<li><b>１手戻す処理</b>
+<p>
+着手関数の説明をしたので、その次は逆の処理の説明をします。<br>
+パターン更新をしながら１手戻す処理Board_UnflipPatternは以下の通りです。<br>
+例によってBoard_Unflip()と似ていますがマスの状態を変えるときに対応する関数を呼び出す点が違います。<br>
+</p>
+<p>
+<pre>
+int Board_UnflipPattern(Board *self)
+{
+	int result;
+	int i, color;
+
+	if (self->Sp <= self->Stack) {
+		return 0;
+	}
+	result = BOARD_STACK_POP(self);
+	color = BOARD_STACK_POP(self);
+	if (color == BLACK) {
+		Board_RemoveSquareWhite(self, BOARD_STACK_POP(self));
+		for (i = 0; i < result; i++) {
+			Board_FlipSquareBlack(self, BOARD_STACK_POP(self));
+		}
+	} else {
+		Board_RemoveSquareBlack(self, BOARD_STACK_POP(self));
+		for (i = 0; i < result; i++) {
+			Board_FlipSquareWhite(self, BOARD_STACK_POP(self));
+		}
+	}
+	self->DiskNum[color] += result;
+	self->DiskNum[OPPONENT_COLOR(color)] -= result + 1;
+	self->DiskNum[EMPTY]++;
+
+	return result;
+}
+</pre>
+</p>
+<li><b>パターンの取得</b>
+<p>
+Boardクラスの修正の締めくくりとしてパターン取得関数の説明をします。<br>
+といってもPatternメンバの参照を行なうだけです。<br>
+</p>
+<p>
+<pre>
+int Board_Pattern(const Board *self, int in_id)
+{
+	return self->Pattern[in_id];
+}
+</pre>
+</p>
+</ul>
+<p>
+次節では探索と局面評価の修正を行ないます。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="5_2.html">＜前へ＞</a>
+<a href="5_4.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

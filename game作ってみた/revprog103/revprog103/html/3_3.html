@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="3_2.html">＜前へ＞</a>
+<a href="3_4.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>3.3 評価クラスの構造</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+評価クラスの構造について説明します。<br>
+</p>
+<ul>
+<li><b>評価パラメータ更新の度合い</b>
+<p>
+どの程度の割合で評価パラメータを更新するかを定義します。<br>
+評価パラメータについては後の節で述べます。<br>
+<pre>
+/* 評価値更新の度合い */
+#define UPDATE_RATIO 0.003
+</pre>
+</p>
+<li><b>パターンの最大評価値</b>
+<p>
+各パターンの評価値の最大値を定義します。<br>
+それぞれの評価値がMAX_PATTERN_VALUEよりも大きくなったり、-MAX_PATTERN_VALUEよりも小さくならないようにします。<br>
+ここでは最大評価値が20石分程度としています。<br>
+<pre>
+/* パターンの最大評価値 */
+#define MAX_PATTERN_VALUE (DISK_VALUE * 20)
+</pre>
+</p>
+<li><b>３の冪</b>
+<p>
+各パターンの状態数は３の冪（累乗）になるので、それを定数としておくと便利です。<br>
+<pre>
+/* 3の冪を表現する定数 */
+#define POW_3_0	1
+#define POW_3_1	3
+#define POW_3_2	9
+#define POW_3_3	27
+#define POW_3_4	81
+#define POW_3_5	243
+#define POW_3_6	729
+#define POW_3_7	2187
+#define POW_3_8	6561
+#define POW_3_9	19683
+#define POW_3_10	59049
+</pre>
+</p>
+<li><b>パターンID</b>
+<p>
+各パターンに番号を割り当てます。<br>
+またパターンの種類の数としてPATTERN_ID_NUMを使用するようにします。<br>
+<pre>
+/* パターンID */
+enum {
+	PATTERN_ID_LINE4,
+	PATTERN_ID_LINE3,
+	PATTERN_ID_LINE2,
+	PATTERN_ID_DIAG8,
+	PATTERN_ID_DIAG7,
+	PATTERN_ID_DIAG6,
+	PATTERN_ID_DIAG5,
+	PATTERN_ID_DIAG4,
+	PATTERN_ID_EDGE8,
+	PATTERN_ID_CORNER8,
+	PATTERN_ID_PARITY,
+	PATTERN_ID_NUM
+};
+</pre>
+</p>
+<li><b>各パターンの状態数</b>
+<p>
+各パターンの状態数を配列として保持しておきます。<br>
+状態数はそれぞれのパターンが何マスから構成されるかによって決まります。<br>
+<pre>
+/* 各パターンの状態数 */
+static const int PatternSize[] =
+{
+	POW_3_8,		/* A4-H4 */
+	POW_3_8,		/* A3-H3 */
+	POW_3_8,		/* A2-H2 */
+	POW_3_8,		/* A1-H8 */
+	POW_3_7,		/* A2-G8 */
+	POW_3_6,		/* A3-F8 */
+	POW_3_5,		/* A4-E8 */
+	POW_3_4,		/* A5-D8 */
+	POW_3_8,		/* A1-G1 + B2 */
+	POW_3_8,		/* A1-C1 + A2-C2 + A3-B3 */
+	2,		/* Parity */
+	0		/* dummy */
+};
+</pre>
+</p>
+<li><b>Evaluator構造体</b>
+<p>
+それでは評価クラスEvaluetorの構造を見てみましょう。
+<pre>
+struct _Evaluator
+{
+	int *Value[PATTERN_ID_NUM];
+	int MirrorLine[POW_3_8];
+	int MirrorCorner[POW_3_8];
+};
+</pre>
+</p>
+<p>
+最初のValueというのはそれぞれのパターンに対する評価値を表します。<br>
+例えばValue[PATTERN_ID_LINE4][100]だったら、PATTERN_ID_LINE4パターンの100番目の状態の評価値を意味します。<br>
+MirrorLineとMirrorCornerは、対称性をもつパターンに対して使用します。<br>
+あるパターンインデックスに対して、対称なパターンが存在するかどうかを調べるための変数です。<br>
+MirrorLineはマスが１列に並んでいるパターンに対して、MirrorCornerは隅のパターンに対して使用します。<br>
+</p>
+<p>
+次節からは関数の実装について説明します。
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="3_2.html">＜前へ＞</a>
+<a href="3_4.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

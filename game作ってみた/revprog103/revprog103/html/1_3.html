@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_2.html">＜前へ＞</a>
+<a href="1_4.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.3 石を返す処理</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では石を返す処理と、返した石を戻す処理について説明します。<br>
+</p>
+<ul>
+<li><b>１方向の石を返す処理</b><br>
+<p>
+後述しますが、石を返す関数Board_Flip()は１方向の石を返す関数を全方向に対して呼び出します。<br>
+まずはこの１方向の石を返す関数Board_FlipLine()を見てみましょう。<br>
+<pre>
+static int Board_FlipLine(Board *self, int in_color, int in_pos, int in_dir)
+{
+	int result = 0;
+	int op = OPPONENT_COLOR(in_color);
+	int pos;
+
+	for (pos = in_pos + in_dir; self->Disk[pos] == op; pos += in_dir) {}
+	if (self->Disk[pos] == in_color) {
+		for (pos -= in_dir; self->Disk[pos] == op; pos -= in_dir) {
+			result++;
+			self->Disk[pos] = in_color;
+			BOARD_STACK_PUSH(self, pos);
+		}
+	}
+
+	return result;
+}
+</pre>
+</p>
+<p>
+１行目のOPPONENT_COLOR()は、指定した色と逆の色（黒なら白、白なら黒）を返すマクロです。<br>
+以下はin_colorがBLACKであったと仮定して話を進めます。<br>
+in_colorがWHITEであったとしても同様の処理になります。<br>
+</p>
+<p>
+最初のforループでは、着手位置in_posからin_dir方向に移動を行います。<br>
+移動先のマスの状態が白石でなくなるまで移動します。<br>
+</p>
+<p>
+次のif文では、移動先のマスの状態が黒石かどうか調べます。<br>
+黒石でなければ挟んだことにならないので、0を返して関数を終了します。<br>
+</p>
+<p>
+移動先が黒石の場合には、次のforループで逆方向の移動を行い各マスに黒石を置いていきます。<br>
+同時に返した石の数を数え(result++)、Stackに返した石の位置を書き込んでいきます。<br>
+BOARD_STACK_PUSH()はStackに書き込むためのマクロです。
+</p>
+<li><b>石を返す処理</b>
+<p>
+それでは石を返す関数Board_Flip()を見てみましょう。<br>
+<pre>
+int Board_Flip(Board *self, int in_color, int in_pos)
+{
+	int result = 0;
+
+	if (self->Disk[in_pos] != EMPTY) {
+		return 0;
+	}
+	result += Board_FlipLine(self, in_color, in_pos, DIR_UP_LEFT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_UP_RIGHT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+	if (result > 0) {
+		self->Disk[in_pos] = in_color;
+		BOARD_STACK_PUSH(self, in_pos);
+		BOARD_STACK_PUSH(self, OPPONENT_COLOR(in_color));
+		BOARD_STACK_PUSH(self, result);
+	}
+
+	return result;
+}
+</pre>
+</p>
+<p>
+まずはじめに、in_posで指定されたマスの状態が空きでなければ、0を返します。<br>
+空きであれば、全８方向に対して石を返していきます。<br>
+１つ以上の方向に石を返すことができたら(result > 0の場合)、着手位置に自分の石を置き、
+着手位置、相手の色、返した石の数をStackに書き込みます。<br>
+</p>
+<li><b>返した石を戻す処理</b>
+<p>
+返した石を戻す処理はBoard_Unflip()に記述してあります。<br>
+<pre>
+int Board_Unflip(Board *self)
+{
+	int result;
+	int i, color;
+
+	if (self->Sp <= self->Stack) {
+		return 0;
+	}
+	result = BOARD_STACK_POP(self);
+	color = BOARD_STACK_POP(self);
+	self->Disk[BOARD_STACK_POP(self)] = EMPTY;
+	for (i = 0; i < result; i++) {
+		self->Disk[BOARD_STACK_POP(self)] = color;
+	}
+
+	return result;
+}
+</pre>
+</p>
+<p>
+まず、SpがStackの最初の位置にあったら0を返します。<br>
+SpがStackの最初の位置ということは、１度も着手していないことを意味するからです。<br>
+</p>
+<p>
+次に、Stackから、返した石の数、相手の色、着手位置を読み込みます。<br>
+そして返した石の数だけ石の位置を読み込み、その石を反転させます。<br>
+BOARD_STACK_POP()はStackから値を読み込むためのマクロです。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_2.html">＜前へ＞</a>
+<a href="1_4.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

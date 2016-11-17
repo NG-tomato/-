@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="8_1.html">＜前へ＞</a>
+<a href="8_3.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>8.2 ハッシュ法</b>
+</font>
+</td>
+</tr>
+</table>
+<ul>
+<li><b>ハッシュ法</b>
+<p>
+リバーシプログラムの置換表には、<b>ハッシュ法</b>がよく使われます。<br>
+ハッシュ法とは、「データを直接比較するのではなく、ある手続きによって小さいデータに変換してから比較する」手法を指します。<br>
+変換手続きを<b>ハッシュ関数</b>、変換後のデータを<b>ハッシュ値</b>と呼びます。<br>
+</p>
+<li><b>ハッシュ法を利用した置換表</b>
+<p>
+本プログラムではハッシュ法を利用して以下のような処理を行います。
+<ol>
+<li>局面を64bitのハッシュ値に変換する。
+<li>ハッシュ値の下位n bitを求め（iとします）、置換表のi番目にハッシュ値と局面情報を登録する。
+<li>局面が登録されているかどうか調べるときには、局面のハッシュ値と、i番目のレコードのハッシュ値とを比較する。
+</ol>
+</p>
+<li><b>ハッシュ法の問題点</b>
+<p>
+ハッシュ法では元のデータが異なっていても、ハッシュ値が同じという場合が発生します。<br>
+これを<b>衝突</b>と呼びます。<br>
+本プログラムでは以下の衝突が発生します。<br>
+</p>
+<p>
+<ul>
+<li>ハッシュ値自体の衝突
+<li>レコードの衝突
+</ul>
+</p>
+<p>
+本プログラムではハッシュ値自体の衝突については考慮しません。<br>
+ハッシュ値が異なる場合には常に元の局面も異なるとして扱います。<br>
+後述するハッシュ関数ではハッシュ値自体が衝突する可能性は極めて低いためです。<br>
+</p>
+<p>
+レコードが衝突した場合には、古いデータを新しいデータで上書きするようにします。<br>
+本プログラムではハッシュ法を高速化のためだけに使用するので、古いデータを上書きしても思考結果が変わるということはありません。<br>
+</p>
+<li><b>ハッシュ関数</b>
+<p>
+本プログラムでは以下のハッシュ関数を使用します。<br>
+</p>
+<p>
+<ol>
+<li>各マス、各色毎に64bitの乱数を割り当てる。<br>
+例えばA1に黒石がある場合にはX1、A2に白石がある場合にはX2というような割り当てを行う。<br>
+<li>局面の石の状態に応じて、対応する値のXOR(排他的論理和)をとりハッシュ値とする。<br>
+<li>手番に対しても乱数を割り当て、上で求めたハッシュ値のさらなるXORをとる。<br>
+</ol>
+</p>
+<li><b>ハッシュ関数の定義</b>
+<p>
+ハッシュ関数はBoardクラスに追加しました。<br>
+関数定義は以下のようになっています。<br>
+</p>
+<p>
+<ul>
+<li><b>void Board_HashValue(Board *self, int in_color, HashValue *out_value)</b>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_turn : 手番<br>
+&nbsp;out_value : ハッシュ値を格納するHashValue構造体へのポインタ<br>
+戻り値 なし
+</ul>
+</p>
+<p>
+またHashValue構造体を使用するため、"board.h"の最初の方に以下の一文を追加しておきます。<br>
+</p>
+<p>
+<pre>
+#include "hash.h"
+</pre>
+</ul>
+<p>
+次節ではハッシュ関数の実装を行います。
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="8_1.html">＜前へ＞</a>
+<a href="8_3.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

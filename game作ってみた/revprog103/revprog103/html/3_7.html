@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="3_6.html">＜前へ＞</a>
+<a href="3_8.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>3.7 中盤の探索</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+前節までで評価関数について説明しました。<br>
+本節では評価関数を使用した中盤探索について説明します。<br>
+</p>
+<p>
+前章の中盤探索を修正しています。<br>
+修正箇所にはコメントをつけました。
+</p>
+<ul>
+<li><b>ComクラスでEvaluatorクラスを使用する</b>
+<p>
+最初に行うことは、ComクラスでEvaluatorクラスを使用できるようにすることです。<br>
+まず構造体メンバにEvaluatorクラスを追加します。<br>
+</p>
+<p>
+<pre>
+struct _Com
+{
+	Board *Board;
+	/* Evaluatorを追加 */
+	Evaluator *Evaluator;
+	int MidDepth;
+	int WLDDepth;
+	int ExactDepth;
+	int Node;
+};
+</pre>
+</p>
+<p>
+次にComクラスの生成関数の引数にEvaluatorクラスへのポインタを追加します。<br>
+</p>
+<p>
+<pre>
+/* 初期化関数にEvaluatorを追加 */
+static int Com_Initialize(Com *self, Evaluator *evaluator)
+{
+	memset(self, 0, sizeof(Com));
+	self->Board = Board_New();
+	if (!self->Board) {
+		return 0;
+	}
+	/* メンバ変数にEvaluatorクラスへのポインタを代入する */
+	self->Evaluator = evaluator;
+	if (!self->Evaluator) {
+		return 0;
+	}
+	self->MidDepth = 1;
+	self->WLDDepth = 1;
+	self->ExactDepth = 1;
+	self->Node = 0;
+	return 1;
+}
+
+/* 生成関数にEvaluatorを追加 */
+Com *Com_New(Evaluator *evaluator)
+{
+	Com *self;
+	self = malloc(sizeof(Com));
+	if (self) {
+		/* 初期化関数にEvaluatorを追加 */
+		if (!Com_Initialize(self, evaluator)) {
+			Com_Delete(self);
+			self = NULL;
+		}
+	}
+	return self;
+}
+</pre>
+</p>
+<li><b>思考関数の修正</b>
+<p>
+次に思考関数を修正します。<br>
+修正点は以下の通りです。<br>
+<ul>
+<li>評価値の正規化
+中盤探索でも終盤探索でも評価値が「石差の見込みのDISK_VALUE倍」となるようにします。<br>
+<li>中盤探索の上限、下限の修正
+これまでは中盤探索の評価値に石差を使用していましたが、今後は評価関数を使用することになります。<br>
+十分大きい値をMAX_VALUEとしてMAX_VALUEを探索の上限、-MAX_VALUEを下限にします。<br>
+</ul>
+</p>
+<p>
+<pre>
+int Com_NextMove(Com *self, const Board *in_board, int in_color, int *out_value)
+{
+	int result;
+	int left;
+	int value;
+	int color;
+
+	Board_Copy(in_board, self->Board);
+	self->Node = 0;
+	left = Board_CountDisks(self->Board, EMPTY);
+	if (left <= self->ExactDepth) {
+		value = Com_EndSearch(self, left, -BOARD_SIZE * BOARD_SIZE, BOARD_SIZE * BOARD_SIZE, in_color, Board_OpponentColor(in_color), 0, &amp;result);
+		/* 評価値の正規化 */
+		value *= DISK_VALUE;
+	} else if (left <= self->WLDDepth) {
+		value = Com_EndSearch(self, left, -BOARD_SIZE * BOARD_SIZE, 1, in_color, Board_OpponentColor(in_color), 0, &amp;result);
+		/* 評価値の正規化 */
+		value *= DISK_VALUE;
+	} else {
+		if ((in_color == WHITE &amp;&amp; self->MidDepth % 2 == 0) ||
+			(in_color == BLACK &amp;&amp; self->MidDepth % 2 == 1)) {
+			Board_Reverse(self->Board);
+			color = Board_OpponentColor(in_color);
+		} else {
+			color = in_color;
+		}
+		/* 探索範囲を-MAX_VALUEからMAX_VALUEまでにする */
+		value = Com_MidSearch(self, self->MidDepth, -MAX_VALUE, MAX_VALUE, color, Board_OpponentColor(color), 0, &amp;result);
+	}
+	if (out_value) {
+		*out_value = value;
+	}
+
+	return result;
+}</pre>
+</p>
+<li><b>中盤探索</b>
+<p>
+最後に中盤探索を修正します。<br>
+修正箇所は２点です。<br>
+<ul>
+<li>リーフで評価関数を呼び出すようにする。
+<li>探索の途中で終局したら石差のDISK_VALUE倍を返すようにする。
+</ul>
+</p>
+<p>
+<pre>
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	int x, y;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+
+	if (in_depth == 0) {
+		self->Node++;
+		/* 評価関数呼び出し */
+		return Evaluator_Value(self->Evaluator, self->Board);
+	}
+	*out_move = NOMOVE;
+	for (x = 0; x < BOARD_SIZE; x++) {
+		for (y = 0; y < BOARD_SIZE; y++) {
+			if (Board_Flip(self->Board, in_color, Board_Pos(x, y))) {
+				if (!can_move) {
+					*out_move = Board_Pos(x, y);
+					can_move = 1;
+				}
+				value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+				Board_Unflip(self->Board);
+				if (value > max) {
+					max = value;
+					*out_move = Board_Pos(x, y);
+					if (max >= in_beta) {
+						return in_beta;
+					}
+				}
+			}
+		}
+	}
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			/* 終局していたら石差のDISK_VALUE倍を評価値とする */
+			max = DISK_VALUE * (Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent));
+		} else {
+			*out_move = PASS;
+			max = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 1, &amp;move);
+		}
+	}
+	return max;
+}
+</pre>
+</p>
+<p>
+これでコンピュータとの対局が可能になりました。<br>
+ただし、まだ評価パラメータの設定を行っていないので、コンピュータは適切な手を選択することができません。<br>
+次節で評価パラメータの設定を行います。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="3_6.html">＜前へ＞</a>
+<a href="3_8.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

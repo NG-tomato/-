@@ -1,0 +1,292 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="7_2.html">＜前へ＞</a>
+<a href="7_4.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>7.3 MPCを使用した探索</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節ではMPCを使用した探索を行なえるようにします。<br>
+修正するファイルは"com.h"と"com.c"です。<br>
+なお、本節の修正の前に7.1節の修正は元に戻しておきます。<br>
+</p>
+<ul>
+<li><b>MPCパラメータの定義</b>
+<p>
+最初にMPCに必要なパラメータを定義します。<br>
+"com.h"を修正します。<br>
+</p>
+<p>
+<pre>
+#define MPC_DEPTH_MIN 3
+typedef struct _MPCInfo MPCInfo;
+struct _MPCInfo
+{
+	int Depth;
+	int Offset;
+	int Deviation;
+};
+</pre>
+</p>
+<p>
+MPC_DEPTH_MINはMPCを行なう残り手数の最小値です。<br>
+上の定義では、残り3手以上からMPCを使用します。<br>
+</p>
+<p>
+MPCInfoは、MPCの情報を格納するための構造体です。<br>
+MPCを行なう残り手数毎に、このMPC情報を用意します。<br>
+Depthは浅い探索の手数です。<br>
+Offsetは前節登場した以下の式のb、Deviationは同式のt * σに対応します。<br>
+</p>
+<p>
+v + b + t * σ &lt; α<br>
+v + b - t * σ &gt; β<br>
+</p>
+<li><b>MPCパラメータの読み込み</b>
+<p>
+次にMPCパラメータを読み込む関数を定義します。<br>
+</p>
+<p>
+<pre>
+int		Com_LoadMPCInfo(Com *self, const char *in_file_name);
+</pre>
+</p>
+<p>
+引数は以下の通りです。<br>
+self : Comクラスへのポインタ<br>
+in_file_name : MPCパラメータを格納したファイルの名前<br>
+読み込みに成功したら1を返し、失敗したら0を返します。<br>
+</p>
+<li><b>Comクラスの初期化処理</b>
+<p>
+最初にComクラスにMPC情報用変数を追加します。<br>
+</p>
+<p>
+<pre>
+struct _Com
+{
+	Board *Board;
+	Evaluator *Evaluator;
+	Opening *Opening;
+	int UseOpening;
+	int MidDepth;
+	int WLDDepth;
+	int ExactDepth;
+	int Node;
+	MoveList Moves[BOARD_SIZE * BOARD_SIZE];
+<font color="red">	int MPCInfoNum;
+	MPCInfo *MPCInfo;</font>
+};
+</pre>
+</p>
+<p>
+MPCInfoNumはMPC情報の個数、MPCInfoにはMPC情報の配列を格納します。<br>
+MPC情報読み込み時に必要なメモリ領域を確保して、MPCInfoがそれを保持します。<br>
+次にComクラス初期化時に追加した変数を初期化するようにします。<br>
+またComクラス破棄時にMPCInfoが保持しているメモリ領域を開放します。<br>
+</p>
+<p>
+<pre>
+static int Com_Initialize(Com *self, Evaluator *evaluator, Opening *opening)
+{
+	memset(self, 0, sizeof(Com));
+	self->Board = Board_New();
+	if (!self->Board) {
+		return 0;
+	}
+	self->Evaluator = evaluator;
+	if (!self->Evaluator) {
+		return 0;
+	}
+	self->Opening = opening;
+	if (!self->Opening) {
+		return 0;
+	}
+	self->UseOpening = 0;
+	self->MidDepth = 1;
+	self->WLDDepth = 1;
+	self->ExactDepth = 1;
+	self->Node = 0;
+<font color="red">	self->MPCInfoNum = 0;
+	self->MPCInfo = NULL;
+</font>
+	return 1;
+}
+
+void Com_Delete(Com *self)
+{
+<font color="red">	if (self->MPCInfo) {
+		free(self->MPCInfo);
+	}</font>
+	if (self->Board) {
+		Board_Delete(self->Board);
+	}
+	free(self);
+}
+</pre>
+</p>
+<li><b>MPCパラメータの読み込み</b>
+<p>
+次にMPCパラメータをファイルから読み込む関数、Com_LoadMPCInfo()を記述します。<br>
+MPCパラメータファイルのフォーマットは以下の通りです。<br>
+</p>
+<p>
+<table border="1" cellpadding="4">
+<tr><th>名前</th><th>意味</th><th>型</th><th>個数</th></tr>
+<tr align="right"><td>Num</td><td>MPC情報の個数</td><td>int</td><td>1</td></tr>
+<tr align="right"><td>Info</td><td>MPC情報</td><td>MPCInfo</td><td>Num</td></tr>
+</table>
+</p>
+<p>
+MPC情報は、１個目が残り手数MPC_DEPTH_MINのMPC情報、２個目が残り手数MPC_DEPTH_MIN+1のMPC情報、、、<br>
+となっています。<br>
+</p>
+<p>
+<pre>
+int Com_LoadMPCInfo(Com *self, const char *in_file_name)
+{
+	FILE *fp;
+
+	fp = fopen(in_file_name, "rb");
+	if (!fp) {
+		return 0;
+	}
+	if (!Com_ReadMPCInfo(self, fp)) {
+		fclose(fp);
+		self->MPCInfoNum = 0;
+		if (self->MPCInfo) {
+			free(self->MPCInfo);
+			self->MPCInfo = NULL;
+		}
+		return 0;
+	}
+	fclose(fp);
+	return 1;
+}
+</pre>
+</p>
+<p>
+ファイルを開いてCom_ReadMPCInfo()を呼び出しています。<br>
+ファイルからパラメータを読み込むのはCom_ReadMPCInfo()で行なっています。<br>
+Com_ReadMPCInfo()の内容は以下の通りです。<br>
+</p>
+<p>
+<pre>
+static int Com_ReadMPCInfo(Com *self, FILE *fp)
+{
+	MPCInfo *info;
+
+	if (fread(&amp;self->MPCInfoNum, sizeof(int), 1, fp) < 1) {
+		return 0;
+	}
+	if (self->MPCInfoNum == 0) {
+		if (self->MPCInfo) {
+			free(self->MPCInfo);
+		}
+		self->MPCInfo = NULL;
+		return 1;
+	}
+	info = realloc(self->MPCInfo, sizeof(MPCInfo) * self->MPCInfoNum);
+	if (!info) {
+		return 0;
+	}
+	self->MPCInfo = info;
+	if (fread(self->MPCInfo, sizeof(MPCInfo), self->MPCInfoNum, fp) < (size_t)self->MPCInfoNum) {
+		return 0;
+	}
+	return 1;
+}
+</pre>
+</p>
+<p>
+最初にファイルからMPC情報の個数を読み込み、必要であればメモリ領域を確保します。<br>
+その後最初の個数分だけMPC情報を読み込んでいます。<br>
+</p>
+<li><b>探索</b>
+<p>
+最後は中盤探索関数Com_MidSearch()です。<br>
+</p>
+<p>
+<pre>
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+	MoveInfo info[BOARD_SIZE * BOARD_SIZE / 2];
+	int i, info_num;
+<font color="red">	MPCInfo *mpc_info;</font>
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Evaluator_Value(self->Evaluator, self->Board);
+	}
+<font color="red">	if (in_depth >= MPC_DEPTH_MIN &amp;&amp; in_depth < MPC_DEPTH_MIN + self->MPCInfoNum) {
+		mpc_info = &amp;self->MPCInfo[in_depth - MPC_DEPTH_MIN];
+		value = in_alpha - mpc_info->Deviation - mpc_info->Offset;
+		if (Com_MidSearch(self, mpc_info->Depth, value - 1, value, in_color, in_opponent, in_pass, out_move) < value) {
+			return in_alpha;
+		}
+		value = in_beta + mpc_info->Deviation - mpc_info->Offset;
+		if (Com_MidSearch(self, mpc_info->Depth, value, value + 1, in_color, in_opponent, in_pass, out_move) > value) {
+			return in_beta;
+		}
+	}</font>
+
+	（中略）
+
+}
+</pre>
+</p>
+<p>
+MPCを使用する残り手数の場合には、浅い探索を行ないます。<br>
+最初に ( α - b - t * σ - 1 ) から ( α - b - t * σ ) の範囲で探索を行ないます。<br>
+次に ( β - b + t * σ ) から ( β - b + t * σ + 1 ) の範囲で探索を行ないます。<br>
+この範囲で探索を行なう理由は以下の通りです。<br>
+<p>
+調べたい不等式が以下であることは既に説明しました。<br>
+</p>
+<p>
+v + b + t * σ &lt; α<br>
+v + b - t * σ &gt; β<br>
+</p>
+<p>
+この式を、vについて解くと以下のようになります。<br>
+</p>
+<p>
+v &lt; α - b - t * σ<br>
+v &gt; β - b + t * σ<br>
+</p>
+<p>
+この式を満たすかどうかを調べるために、上限と下限の幅を０（実装上は１）にしてWindow探索を行ないます。<br>
+それが上記の範囲での探索です。<br>
+上限と下限の幅を０にする探索を<b>Null Window探索</b>と呼びます。<br>
+</p>
+</ul>
+<p>
+これでMPCを使用した探索を行なえるようになりました。<br>
+しかし、MPCパラメータを計算していないので、実際に対局することはできません。
+次節ではMPCパラメータの計算を行います。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="7_2.html">＜前へ＞</a>
+<a href="7_4.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

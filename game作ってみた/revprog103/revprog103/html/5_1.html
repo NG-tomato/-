@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="4_6.html">＜前へ＞</a>
+<a href="5_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>5.1 パターン更新も含めた着手</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章ではパターン状態の更新を着手時に行なうようにします。<br>
+これまでは評価関数の中でパターンの抽出を行なっていましたが、<br>
+今後はBoardの内部で各パターンの状態を保持しておき、１手打つ毎に状態の更新を行ないます。<br>
+評価関数ではBoardが保持しているパターンの状態を参照するだけにします。<br>
+１手で変更されるパターンの数は少ないので、全パターンの状態を計算するよりも少ない時間で局面評価を行なえるようになります。<br>
+</p>
+<p>
+最初に必要な定数を定義します。
+</p>
+<ul>
+<li><b>パターンID</b>
+<p>
+"board.h"にパターンIDを定義します。<br>
+これはBoardクラスにパターンの状態を問い合わせるときに使用します。<br>
+例えば辺のパターンの状態を知りたかったら、PATTERN_ID_EDGE8_1～PATTERN_ID_EDGE8_8を使用します。<br>
+</p>
+<p>
+<pre>
+/* パターンID */
+#define PATTERN_ID_LINE4_1	0
+#define PATTERN_ID_LINE4_2	1
+#define PATTERN_ID_LINE4_3	2
+#define PATTERN_ID_LINE4_4	3
+#define PATTERN_ID_LINE3_1	4
+#define PATTERN_ID_LINE3_2	5
+#define PATTERN_ID_LINE3_3	6
+#define PATTERN_ID_LINE3_4	7
+#define PATTERN_ID_LINE2_1	8
+#define PATTERN_ID_LINE2_2	9
+#define PATTERN_ID_LINE2_3	10
+#define PATTERN_ID_LINE2_4	11
+#define PATTERN_ID_DIAG8_1	12
+#define PATTERN_ID_DIAG8_2	13
+#define PATTERN_ID_DIAG7_1	14
+#define PATTERN_ID_DIAG7_2	15
+#define PATTERN_ID_DIAG7_3	16
+#define PATTERN_ID_DIAG7_4	17
+#define PATTERN_ID_DIAG6_1	18
+#define PATTERN_ID_DIAG6_2	19
+#define PATTERN_ID_DIAG6_3	20
+#define PATTERN_ID_DIAG6_4	21
+#define PATTERN_ID_DIAG5_1	22
+#define PATTERN_ID_DIAG5_2	23
+#define PATTERN_ID_DIAG5_3	24
+#define PATTERN_ID_DIAG5_4	25
+#define PATTERN_ID_DIAG4_1	26
+#define PATTERN_ID_DIAG4_2	27
+#define PATTERN_ID_DIAG4_3	28
+#define PATTERN_ID_DIAG4_4	29
+#define PATTERN_ID_EDGE8_1	30
+#define PATTERN_ID_EDGE8_2	31
+#define PATTERN_ID_EDGE8_3	32
+#define PATTERN_ID_EDGE8_4	33
+#define PATTERN_ID_EDGE8_5	34
+#define PATTERN_ID_EDGE8_6	35
+#define PATTERN_ID_EDGE8_7	36
+#define PATTERN_ID_EDGE8_8	37
+#define PATTERN_ID_CORNER8_1	38
+#define PATTERN_ID_CORNER8_2	39
+#define PATTERN_ID_CORNER8_3	40
+#define PATTERN_ID_CORNER8_4	41
+#define NUM_PATTERN_ID		42
+</pre>
+</p>
+</ul>
+<p>
+次に関数の追加を行ないます。<br>
+パターンの初期化関数、取得関数、着手と同時にパターン更新を行なう関数を追加します。<br>
+</p>
+<ul>
+<li><b>void Board_InitializePattern(Board *self)</b>
+<p>
+Boardクラスが保持しているパターン状態の初期化を行ないます。<br>
+後述しますが保持しているパターン状態は必ずしも正しいわけではありません。<br>
+パターン取得を行なう前にこの関数を呼ぶ必要があります。<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>int Board_Pattern(const Board *self, int in_id)</b>
+<p>
+指定したパターンの状態を取得します。<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_id : 状態を取得するパターンID<br>
+戻り値 パターン状態<br>
+</p>
+<li><b>int Board_FlipPattern(Board *self, int in_color, int in_pos)</b>
+<p>
+パターン更新を行なう着手関数です。<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_color : 着手する石の色<br>
+&nbsp;in_pos : 着手するマスの位置<br>
+戻り値 着手できた場合には返した石の数（着手したマスの石は数に含まない）。着手できない場合には0<br>
+</p>
+<li><b>int Board_UnflipPattern(Board *self)</b>
+<p>
+パターン更新を行いながら１手戻します<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+戻り値 直前の手によって返した石の数（着手したマスの石は数に含まない）。盤面が初期状態の場合には0を返す<br>
+</p>
+<li><b>注意点</b>
+<p>
+今回の修正によって、着手と１手戻す処理をそれぞれ２種類の関数で行なえるようになりました。<br>
+それぞれは対になっていて、以下に注意しなければなりません。<br>
+これを守らないとBoardで保持しているパターン状態の整合がとれなくなります。<br>
+<ul>
+<li>Board_Flip()で着手したらBoard_Unflip()で戻す<br>
+<li>Board_FlipPattern()で着手したらBoard_UnflipPattern()で戻す<br>
+</ul>
+</p>
+<p>
+またBoard_Flip()を呼び出した後には正しいパターン状態の取得はできません。<br>
+Board_Flip()ではパターン状態の更新は行なわないためです。<br>
+ただし、Board_Flip()を数回呼び出した後、同じ回数だけBoard_Unflip()を呼び出した場合にはパターン状態の取得が可能です。<br>探索と局面評価時には以上の点に注意してください。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="4_6.html">＜前へ＞</a>
+<a href="5_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

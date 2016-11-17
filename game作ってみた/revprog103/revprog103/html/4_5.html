@@ -1,0 +1,206 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="4_4.html">＜前へ＞</a>
+<a href="4_6.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>4.5 候補手の並び替え</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+αβ法では、評価値の高い（相手局面では評価値の低い）ノードから探索を行なうと探索ノード数を減らすことができます。<br>
+評価値の高いノードの探索を行うと、探索の下限が上昇します。<br>
+その結果、探索の上限と下限の幅が狭くなります。<br>
+探索の上限と下限の幅が狭い方が枝刈りが多く発生するので、探索ノードが減ることになります。<br>
+</p>
+<p>
+本節では、探索時に候補手に対して１手読みを行い、その評価値を基に候補手の並び替えを行ないます。<br>
+候補手の並び替えを行なうことで評価値の高そうなノードから探索を行なうことができます。<br>
+</p>
+<ul>
+<li><b>着手情報の定義</b>
+<p>
+まず着手箇所（実際に使用するのは候補手リストの要素）と評価値を格納するための構造体を定義します。<br>
+</p>
+<p>
+<pre>
+typedef struct _MoveInfo MoveInfo;
+struct _MoveInfo
+{
+	MoveList *Move;
+	int Value;
+};
+</pre>
+</p>
+<li><b>並び替え関数</b>
+<p>
+次に候補手の並び替えを行なう関数を実装します。<br>
+</p>
+<p>
+<pre>
+static int Com_Sort(Com *self, int in_color, MoveInfo *out_info)
+{
+	int info_num = 0;
+	MoveList *p;
+	MoveInfo info_tmp, *best_info;
+	int i, j;
+
+	for (p = self->Moves->Next; p; p = p->Next) {
+		if (Board_Flip(self->Board, in_color, p->Pos)) {
+			out_info[info_num].Move = p;
+			out_info[info_num].Value = Evaluator_Value(self->Evaluator, self->Board);
+			info_num++;
+			Board_Unflip(self->Board);
+		}
+	}
+	if (in_color == WHITE) {
+		for (i = 0; i < info_num; i++) {
+			out_info[i].Value = -out_info[i].Value;
+		}
+	}
+	for (i = 0; i < info_num; i++) {
+		best_info = &amp;out_info[i];
+		for (j = i + 1; j < info_num; j++) {
+			if (out_info[j].Value > best_info->Value) {
+				best_info = &amp;out_info[j];
+			}
+		}
+		info_tmp = *best_info;
+		*best_info = out_info[i];
+		out_info[i] = info_tmp;
+	}
+	return info_num;
+}
+</pre>
+</p>
+<p>
+引数は以下の通りです。<br>
+self : Comクラスへのポインタ<br>
+in_color : 手番<br>
+out_info : 並び替え結果を格納するMoveInfo構造体へのポインタ<br>
+</p>
+<p>
+処理は３つに分かれており、それぞれ以下のようになっています。<br>
+<ul>
+<li>候補手リストから着手可能な要素を抜き出し、評価値づけを行なう
+<li>白番であれば評価値に-1を掛ける
+<li>評価値に基づいてMoveInfo構造体の並び替えを行なう
+</ul>
+</p>
+<p>
+ソート方法には選択ソートを使用しました。<br>
+</p>
+<li><b>探索処理への導入</b>
+<p>
+それでは候補手の並び替えを探索処理に導入します。<br>
+Com_MidSearch()を以下のように修正しました。<br>
+</p>
+<p>
+<pre>
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+<font color="red">	/* 並び替え用の着手情報 */
+	MoveInfo info[BOARD_SIZE * BOARD_SIZE / 2];
+	int i, info_num;</font>
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Evaluator_Value(self->Evaluator, self->Board);
+	}
+	*out_move = NOMOVE;
+<font color="red">	/* 残り手数が２手より多いときには候補手の並び替えを行なう */
+	if (in_depth > 2) {
+		info_num = Com_Sort(self, in_color, info);
+		if (info_num > 0) {
+			*out_move = info[0].Move->Pos;
+			can_move = 1;
+		}
+		for (i = 0; i < info_num; i++) {
+			Board_Flip(self->Board, in_color, info[i].Move->Pos);
+			RemoveList(info[i].Move);
+			value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+			Board_Unflip(self->Board);
+			RecoverList(info[i].Move);
+			if (value > max) {
+				max = value;
+				*out_move = info[i].Move->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	} else {
+		for (p = self->Moves->Next; p; p = p->Next) {
+			if (Board_Flip(self->Board, in_color, p->Pos)) {
+				RemoveList(p);
+				if (!can_move) {
+					*out_move = p->Pos;
+					can_move = 1;
+				}
+				value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+				Board_Unflip(self->Board);
+				RecoverList(p);
+				if (value > max) {
+					max = value;
+					*out_move = p->Pos;
+					if (max >= in_beta) {
+						return in_beta;
+					}
+				}
+			}
+		}
+	}</font>
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			max = DISK_VALUE * (Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent));
+		} else {
+			*out_move = PASS;
+			max = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 1, &amp;move);
+		}
+	}
+	return max;
+}
+</pre>
+</p>
+<p>
+探索の残り手数が２手を超えていれば並び替えを行うようにしました。<br>
+リーフ近くで並び替えをしてしまうと、並び替えの処理時間が長くなってしまいます。<br>
+そのため比較的浅いノードでのみ並び替えを行なうようにします。<br>
+並び替えを行なった後の処理は、並び替えを行なわない場合の処理と同様です。<br>
+</p>
+<p>
+Com_EndSearch()では残り手数が８手を超えている場合に並び替えを行なうようにしました。<br>
+Com_EndSearch()の修正はCom_MidSearch()とほぼ同じなので省略します。<br>
+</p>
+<li><b>導入結果</b>
+<p>
+それでは実際に動作させてみましょう。<br>
+並び替えを行なう分１ノードあたりの処理時間が長くなってしまいました。<br>
+しかし探索ノード数が大きく減っているために、全体としては高速になっているのがわかると思います。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="4_4.html">＜前へ＞</a>
+<a href="4_6.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

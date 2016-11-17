@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="2_4.html">＜前へ＞</a>
+<a href="3_1.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>2.5 αβ法 </b>
+</font>
+</td>
+</tr>
+</table>
+<ul>
+<li><b>αβ法</b><br>
+<p>
+<b>αβ法</b>とは、MinMax法を改良したアルゴリズムです。<br>
+MinMax法と比較して探索ノード数を大幅に減らし、かつMinMax法と同じ結果を得られるという特徴があります。
+</p>
+<p>
+下図はMinMax法の説明に使用した図ですが、ノードに名前をつけています。<br>
+またいくつかのノードにX印がついています。<br>
+このX印は何を意味しているのでしょうか。<br>
+</p>
+<p>
+<img src="../img/alphabeta.gif" width="600" height="368" alt="αβ法による探索"><br>
+αβ法による探索
+</p>
+<p>
+各ノードで、左の子ノードを先に探索すると仮定します。<br>
+するとＪの評価を行った段階で、Ｋの評価を行う必要がなくなります。<br>
+この理由は以下の通りです。
+<ol>
+<li>Ｄの評価値が６なので、Ｄを評価した段階でＢの評価値は６以下である。
+<li>Ｊの評価値が７なので、Ｊを評価した段階でＥの評価値は７以上である。
+<li>Ｂでは評価値６以下の手を選択しなければならないため、評価値が７以上のＥを選択することはない。
+</ol>
+</p>
+<p>
+Ｊを評価したときには評価値６という上限によって探索が打ち切られています。<br>
+これをβカットと呼びます。<br>
+</p>
+<p>
+同様の理由によりＧ以下のノードも評価の必要がなくなります。<br>
+<ol>
+<li>Ｂの評価値が６なので、Ｂを評価した段階でＡの評価値は６以上である。
+<li>Ｆの評価値が５なので、Ｆを評価した段階でＣの評価値は５以下である。
+<li>Ａでは評価値６以上の手を選択しなければならないため、評価値が５以下のＣを選択することはない。
+</ol>
+</p>
+<p>
+Ｆを評価したときには評価値６という下限によって探索が打ち切られています。<br>
+これをαカットと呼びます。<br>
+</p>
+<p>
+αカットとβカットを行うことで、探索ノードを減らすことができます。<br>
+これが、αβ法の探索ノード数がMinMaxと比較して少ない理由です。<br>
+またαβ法には、αとβの範囲にある手だけを選択するという特徴もあります。<br>
+このように上限と下限を設けて探索を行う手法を<b>Window探索</b>と呼びます。<br>
+</p>
+<p>
+上記の例では自分の手番で評価値最大化、相手の手番で評価値最小化を行っていますが、<br>
+NegaMax法と同様に、各ノードで評価値最大化をすればよいように改良することもできます。<br>
+実際にはこの改良版を使用します。
+</p>
+<li><b>関数の実装</b>
+<p>
+</p>
+それではαβ法の実装をしましょう。<br>
+Com_EndSearch()は以下のようになっています。<br>
+<p>
+<pre>
+static int Com_EndSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	int x, y;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+	}
+	*out_move = NOMOVE;
+	for (x = 0; x < BOARD_SIZE; x++) {
+		for (y = 0; y < BOARD_SIZE; y++) {
+			if (Board_Flip(self->Board, in_color, Board_Pos(x, y))) {
+				if (!can_move) {
+					*out_move = Board_Pos(x, y);
+					can_move = 1;
+				}
+				value = -Com_EndSearch(self, in_depth-1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+				Board_Unflip(self->Board);
+				if (value > max) {
+					max = value;
+					*out_move = Board_Pos(x, y);
+					if (max >= in_beta) {
+						return in_beta;
+					}
+				}
+			}
+		}
+	}
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			max = Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+		} else {
+			*out_move = PASS;
+			max = -Com_EndSearch(self, in_depth, -in_beta, -max, in_opponent, in_color, 1, &amp;move);
+		}
+	}
+	return max;
+}
+</pre>
+</p>
+<p>
+引数は以下の通りです。<br>
+NegaMax法と異なるのは、α値とβ値が加わっている点です。<br>
+self : Comクラスへのポインタ<br>
+in_depth : 探索の手数（Com_EndSearch()の場合は空きマスの数と一致する）<br>
+in_alpha : α値（探索の下限）<br>
+in_beta : β値（探索の上限）<br>
+in_color : 自分の手番<br>
+in_opponent : 相手の手番<br>
+in_pass : 直前の手がパスなら1、パスでなければ0<br>
+*out_move : 選択した手を格納しておく。<br>
+</p>
+<p>
+処理はNegaMax法の場合とほぼ同じですが、評価値がβ値以上になったときに探索を打ち切る（βカット）点が違います。<br>
+</p>
+<li><b>対局</b>
+<p>
+それではαβ法で探索を行うプログラムと対局を行ってみましょう。<br>
+main()を実行するとコンピュータと対局を行います。<br>
+NegaMax法の場合と同じ手を選ぶようになっていますが、思考時間が大幅に減っているはずです。<br>
+コンピュータ思考時に探索時間、探索ノード数が表示されるので確認してください。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="2_4.html">＜前へ＞</a>
+<a href="3_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

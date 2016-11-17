@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="8_2.html">＜前へ＞</a>
+<a href="8_4.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>8.3 ハッシュ関数の実装</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では、前節定義したハッシュ関数の実装を行います。<br>
+修正するファイルは"board.c"です。<br>
+</p>
+<ul>
+<li><b>メンバ変数追加</b>
+<p>
+最初にBoardクラスにメンバ変数を追加します。<br>
+追加する変数はハッシュ値の差分（マスの状態に応じてハッシュ値とのXORをとる値）です。<br>
+Board構造体の定義は以下のようになります。<br>
+</p>
+<p>
+<pre>
+struct _Board
+{
+	int Disk[NUM_DISK];
+	int Stack[NUM_STACK];
+	int *Sp;
+	int DiskNum[3];
+	int Pattern[NUM_PATTERN_ID];
+	int PatternID[NUM_DISK][NUM_PATTERN_DIFF];
+	int PatternDiff[NUM_DISK][NUM_PATTERN_DIFF];
+<font color="red">	HashValue HashDiffBlack[NUM_DISK];
+	HashValue HashDiffWhite[NUM_DISK];
+	HashValue HashDiffTurn;</font>
+};
+</pre>
+</p>
+<li><b>乱数生成マクロの追加</b>
+<p>
+乱数を生成するマクロget_rand()を追加します。<br>
+他のファイルにも定義されていませすが、以下の定義を"board.h"にも追加します。<br>
+0～(in_max-1)までの整数をランダムに返します。<br>
+</p>
+<p>
+<pre>
+#define get_rand(in_max) ((int)((double)(in_max) * rand() / (RAND_MAX + 1.0)))
+</pre>
+</p>
+<li><b>ハッシュ値差分の初期化</b>
+<p>
+ハッシュ値の差分を初期化する関数Board_InitializeHashDiff()を追加します。<br>
+関数の内部は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+static void Board_InitializeHashDiff(Board *self)
+{
+	int i;
+
+	self->HashDiffTurn.Low = (unsigned long)get_rand(256) | ((unsigned long)get_rand(256) << 8) |
+		((unsigned long)get_rand(256) << 16) | ((unsigned long)get_rand(256) << 24);;
+	self->HashDiffTurn.High = (unsigned long)get_rand(256) | ((unsigned long)get_rand(256) << 8) |
+		((unsigned long)get_rand(256) << 16) | ((unsigned long)get_rand(256) << 24);;
+	for (i = 0; i < NUM_DISK; i++) {
+		self->HashDiffBlack[i].Low = (unsigned long)get_rand(256) | ((unsigned long)get_rand(256) << 8) |
+			((unsigned long)get_rand(256) << 16) | ((unsigned long)get_rand(256) << 24);
+		self->HashDiffBlack[i].High = (unsigned long)get_rand(256) | ((unsigned long)get_rand(256) << 8) |
+			((unsigned long)get_rand(256) << 16) | ((unsigned long)get_rand(256) << 24);
+		self->HashDiffWhite[i].Low = (unsigned long)get_rand(256) | ((unsigned long)get_rand(256) << 8) |
+			((unsigned long)get_rand(256) << 16) | ((unsigned long)get_rand(256) << 24);
+		self->HashDiffWhite[i].High = (unsigned long)get_rand(256) | ((unsigned long)get_rand(256) << 8) |
+			((unsigned long)get_rand(256) << 16) | ((unsigned long)get_rand(256) << 24);
+	}
+}
+</pre>
+</p>
+<p>
+差分毎に乱数を割り当てています。<br>
+</p>
+<p>
+またBoardクラスの生成関数でBoard_InitializeHashDiff()を呼ぶようにします。<br>
+</p>
+<p>
+<pre>
+Board *Board_New(void)
+{
+	Board *self;
+
+	self = malloc(sizeof(Board));
+	if (self) {
+		Board_InitializePatternDiff(self);
+<font color="red">		Board_InitializeHashDiff(self);</font>
+		Board_Clear(self);
+	}
+	return self;
+}</pre>
+</p>
+<li><b>ハッシュ関数</b>
+<p>
+最後にハッシュ関数Board_HashValue()を実装します。<br>
+</p>
+<p>
+<pre>
+void Board_HashValue(Board *self, int in_color, HashValue *out_value)
+{
+	int i;
+
+	out_value->Low = 0;
+	out_value->High = 0;
+	for (i = 0; i < NUM_DISK; i++) {
+		switch (self->Disk[i]) {
+		case BLACK:
+			out_value->Low ^= self->HashDiffBlack[i].Low;
+			out_value->High ^= self->HashDiffBlack[i].High;
+			break;
+		case WHITE:
+			out_value->Low ^= self->HashDiffWhite[i].Low;
+			out_value->High ^= self->HashDiffWhite[i].High;
+			break;
+		default:
+			break;
+		}
+	}
+	if (in_color == WHITE) {
+		out_value->Low ^= self->HashDiffTurn.Low;
+		out_value->High ^= self->HashDiffTurn.High;
+	}
+}
+</pre>
+</p>
+<p>
+各マスの状態を調べ、XORをとっているだけです。<br>
+また白番のときにはHashDiffTurnとのXORもとるようにします。<br>
+</p>
+</ul>
+<p>
+次節からは置換表の実装を行います。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="8_2.html">＜前へ＞</a>
+<a href="8_4.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

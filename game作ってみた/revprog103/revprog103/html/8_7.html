@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="8_6.html">＜前へ＞</a>
+<a href="future.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>8.7 その他の処理と効果の検証</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では、前節までに説明しなかった処理を実装します。<br>
+</p>
+<ul>
+<li><b></b>
+<p>
+最初に"com.h"に以下のプロトタイプを追加します。<br>
+Com_CountHashGet()は直前の探索でHash_Get()を呼び出した回数を返します。<br>
+Com_CountHashHit()は直前の探索でHash_Hit()が1を返した回数を返します。<br>
+Com_CountHashGet()の戻り値をCom_CountHashHit()の戻り値で割ることで、どの程度重複局面が発生しているかを知ることができます。<br>
+</p>
+<p>
+<pre>
+int		Com_CountHashGet(const Com *self);
+int		Com_CountHashHit(const Com *self);
+</pre>
+</p>
+<p>
+次に"com.c"に関数の内部実装を追加します。<br>
+処理は単純で、Comクラス内部の置換表に対して問い合わせを行うだけです。<br>
+<p>
+<pre>
+int Com_CountHashGet(const Com *self)
+{
+	return Hash_CountGet(self->Hash);
+}
+
+int Com_CountHashHit(const Com *self)
+{
+	return Hash_CountHit(self->Hash);
+}
+</pre>
+</p>
+<p>
+</p>
+<li><b>対局時のヒット率表示</b>
+<p>
+対局時に置換表のヒット率（置換表から局面を取得しようとして、実際に取得できた割り合い）を表示します。<br>"main.c"に以下の処理を追加します。<br>
+Com_CountHashHit()の戻り値をCom_CountHashGet()の戻り値で割ってパーセンテージに直しますが、Com_CountHashGet()が0の場合にはヒット率0%とします。<br>
+</p>
+<p>
+<pre>
+static void play(Board *board, Com *com)
+{
+	（中略）
+			printf("コンピュータ思考中...\n");
+			if (Board_CanPlay(board, color)) {
+				clock_start = clock();
+				move = Com_NextMove(com, board, color, &amp;score);
+				clock_end = clock();
+				printf("%c%cに置きます\n", "ABCDEFGH"[Board_X(move)], "12345678"[Board_Y(move)]);
+				printf("評価値: %.2f\n", (double)score / DISK_VALUE);
+				printf("思考時間: %.2f 秒 ノード数: %d NPS: %.2f knps\n", (double)(clock_end - clock_start) / CLOCKS_PER_SEC, 
+					Com_CountNodes(com), (double)Com_CountNodes(com) / (clock_end - clock_start + 1) * CLOCKS_PER_SEC / 1000);
+<font color="red">				if (Com_CountHashGet(com) > 0) {
+					printf("ヒット率 %.2f %%\n", (double)Com_CountHashHit(com) / Com_CountHashGet(com) * 100);
+				} else {
+					printf("ヒット率 %.2f %%\n", 0.0);
+				}</font>
+				Board_Flip(board, color, move);
+			} else {
+				printf("パスします\n");
+				move = PASS;
+			}
+	（中略）
+}
+</pre>
+</p>
+以上で置換表に関する実装は終了です。<br>
+<p>
+</p>
+<li><b>効果の検証</b>
+<p>
+置換表導入前と導入後とで対局を行ってみました。<br>
+結果は以下の通りです。<br>
+</p>
+<p>
+中盤探索の比較(終盤は18手完全読み固定)
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>8</td><td>51</td><td>0.967</td><td>0.987</td></tr>
+<tr align = "right"><td>10</td><td>50</td><td>0.921</td><td>0.938</td></tr>
+<tr align = "right"><td>12</td><td>56</td><td>0.885</td><td>0.903</td></tr>
+<tr align = "right"><td>14</td><td>52</td><td>0.845</td><td>0.868</td></tr>
+<tr align = "right"><td>16</td><td>54</td><td>0.808</td><td>0.831</td></tr>
+</table>
+</p>
+<p>
+終盤探索（１局）の比較(中盤は8読み手固定)
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>14</td><td>51</td><td>0.597</td><td>0.607</td></tr>
+<tr align = "right"><td>16</td><td>50</td><td>0.542</td><td>0.549</td></tr>
+<tr align = "right"><td>18</td><td>56</td><td>0.484</td><td>0.491</td></tr>
+<tr align = "right"><td>20</td><td>52</td><td>0.441</td><td>0.442</td></tr>
+<tr align = "right"><td>22</td><td>54</td><td>0.463</td><td>0.434</td></tr>
+</table>
+</p>
+<p>
+終盤探索(完全読み開始手数のみ)の比較(中盤は8読み手固定)
+<table border="1" cellpadding="2">
+<tr><th>中盤手数</th><th>勝率 ( % )</th><th>ノード数比</th><th>思考時間比</th></tr>
+<tr align = "right"><td>8</td><td>51</td><td>0.914</td><td>0.911</td></tr>
+<tr align = "right"><td>10</td><td>50</td><td>0.832</td><td>0.837</td></tr>
+<tr align = "right"><td>12</td><td>56</td><td>0.737</td><td>0.744</td></tr>
+<tr align = "right"><td>14</td><td>52</td><td>0.684</td><td>0.682</td></tr>
+<tr align = "right"><td>16</td><td>54</td><td>0.695</td><td>0.622</td></tr>
+</table>
+</p>
+<p>
+表の項目はMPCの場合と同じです。<br>
+１局中の中盤探索だけを比較した場合、１局中の終盤探索だけを比較した場合、終盤探索の完全読み開始手数のみを比較した場合の３通りがあります。<br>
+中盤では最大17%、終盤では最大57%（１局中）思考時間を減らすことができました。<br>
+いずれも手数が長くなる程ノード数比、思考時間比がともに減少する傾向があります。<br>
+また１局中の終盤探索ではノード数比が顕著に減っていますが、これは空きマスが小さい局面での探索ノード数が大幅に減るためです。<br>
+例えば20個空き局面で探索を行った後に18個空き局面で探索を行うと、20個空き局面での探索で発生した局面を探索に使用できます。<br>
+このため空きマスが小さい局面ではほとんど探索せずに次の手を選ぶことができます。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="8_6.html">＜前へ＞</a>
+<a href="future.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

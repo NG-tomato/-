@@ -1,0 +1,3 @@
+MainApp		I—¹
+MainPanel	‚Ù‚ÚI—¹
+GameState

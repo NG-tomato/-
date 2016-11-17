@@ -1,0 +1,239 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="6_3.html">＜前へ＞</a>
+<a href="6_5.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>6.4 局面の比較</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+１つの定石データが局面状態と局面情報から構成されることは既に述べました。<br>
+ある局面が定石として登録されているか調べたり、定石として登録するためには、<br>
+既に登録されている定石データの局面と比較する処理が必要です。<br>
+本節では、局面を比較する処理について説明します。<br>
+</p>
+<ul>
+<li><b>局面状態の生成方法</b>
+<p>
+局面状態が以下の構造体であることは既に述べました。<br>
+</p>
+<p>
+<pre>
+typedef struct _PositionKey PositionKey;
+struct _PositionKey
+{
+	unsigned long int bl;
+	unsigned long int bh;
+	unsigned long int wl;
+	unsigned long int wh;
+};
+</pre>
+</p>
+<p>
+黒番として考えてみましょう。<br>
+例えばA1が黒であればblの１ビット目を１に、B1が白であればwlの２ビット目を２に、、、<br>
+という処理を全てのマスに対して行ないます。<br>
+</p>
+<p>
+ただし注意しなければ点があります。<br>
+１つの局面には左右反転等の対称な局面が７つあります。<br>
+これら８つの局面を同一の局面として扱わなければなりません。<br>
+</p>
+<p>
+それにはまず１つの局面から対称な８つの局面を生成します。<br>
+そして８つの局面を比較して、一番「小さい」局面を局面状態として採用します。<br>
+どちらの局面が「小さい」かを比較する方法は以下の通りです。<br>
+</p>
+<p>
+<ul>
+<li>最初にwhを比較して、小さいwhを持つ局面が「小さい」局面
+<li>whが同じであれば、wlを比較して小さいwlを持つ局面が「小さい」局面
+<li>wlが同じであれば、bhを比較して小さいbhを持つ局面が「小さい」局面
+<li>bhが同じであれば、blを比較して小さいblを持つ局面が「小さい」局面
+</ul>
+</p>
+<li><b>局面状態の生成</b>
+<p>
+では実際に局面を生成する関数Board_Key()を実装してみましょう。<br>
+引数は以下の通りです。<br>
+in_board : Boardクラスへのポインタ<br>
+in_color : 手番<br>
+out_key : 生成した局面状態が格納されます<br>
+</p>
+<p>
+<pre>
+static void Board_Key(const Board *in_board, int in_color, PositionKey *out_key)
+{
+	PositionKey key;
+	unsigned int flag;
+	int i, x, y, c;
+	int op_color;
+
+	op_color = Board_OpponentColor(in_color);
+	for (i = 0; i < 8; i++) {
+		memset(&amp;key, 0, sizeof(PositionKey));
+		flag = 1;
+		for (y = 0; y < BOARD_SIZE / 2; y++) {
+			for (x = 0; x < BOARD_SIZE; x++) {
+				c = Board_Disk(in_board, Board_RotatePos(x, y, i));
+				if (c == in_color) {
+					key.bl |= flag;
+				} else if (c == op_color) {
+					key.wl |= flag;
+				}
+				c = Board_Disk(in_board, Board_RotatePos(x, y + BOARD_SIZE / 2, i));
+				if (c == in_color) {
+					key.bh |= flag;
+				} else if (c == op_color) {
+					key.wh |= flag;
+				}
+				flag <<= 1;
+			}
+		}
+		if (i == 0 || PositionKey_Comp(&amp;key, out_key) < 0) {
+			*out_key = key;
+		}
+	}
+}
+</pre>
+</p>
+<p>
+各マスを調べて、石があれば該当するビットを１にしています。<br>
+ただし、８つの対称な局面を調べるために、Board_RotatePos()という関数を呼び出しています。<br>
+また局面を比較するためにPositionKey_Comp()を呼び出しています。<br>
+Board_RotatePos()は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+static int Board_RotatePos(int in_x, int in_y, int in_type)
+{
+	switch (in_type) {
+	case 0:
+		return Board_Pos(in_x, in_y);
+	case 1:
+		return Board_Pos(BOARD_SIZE - in_x - 1, in_y);
+	case 2:
+		return Board_Pos(in_x, BOARD_SIZE - in_y - 1);
+	case 3:
+		return Board_Pos(BOARD_SIZE - in_x - 1, BOARD_SIZE - in_y - 1);
+	case 4:
+		return Board_Pos(in_y, in_x);
+	case 5:
+		return Board_Pos(BOARD_SIZE - in_y - 1, in_x);
+	case 6:
+		return Board_Pos(in_y, BOARD_SIZE - in_x - 1);
+	case 7:
+		return Board_Pos(BOARD_SIZE - in_y - 1, BOARD_SIZE - in_x - 1);
+	default:
+		break;
+	}
+	return 0;
+}
+</pre>
+</p>
+<p>
+マスのＸ座標（in_x）とＹ座標（in_y）、それと対称の種類（in_type）を指定すると、反転または回転した局面でのマスの位置を返します。<br>
+in_typeと反転または回転の方法の対応は以下の通りです。<br>
+</p>
+<p>
+<ul>
+<li>0 : 反転も回転も行なわない
+<li>1 : 左右反転
+<li>2 : 上下反転
+<li>3 : 180度回転
+<li>4 : A1-H8軸で反転
+<li>5 : 90度回転
+<li>6 : 270度回転
+<li>7 : H1-A8軸で反転
+</ul>
+</p>
+<p>
+PositionKey_Comp()は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+static int PositionKey_Comp(const PositionKey *in_key1, const PositionKey *in_key2)
+{
+	if (in_key1->wh > in_key2->wh) {
+		return 1;
+	} else if (in_key1->wh < in_key2->wh) {
+		return -1;
+	} else if (in_key1->wl > in_key2->wl) {
+		return 1;
+	} else if (in_key1->wl < in_key2->wl) {
+		return -1;
+	} else if (in_key1->bh > in_key2->bh) {
+		return 1;
+	} else if (in_key1->bh < in_key2->bh) {
+		return -1;
+	} else if (in_key1->bl > in_key2->bl) {
+		return 1;
+	} else if (in_key1->bl < in_key2->bl) {
+		return -1;
+	}
+	return 0;
+}
+</pre>
+</p>
+<p>
+２つの局面状態（in_key1, in_key2）を渡します。<br>
+in_key1が大きければ1、in_key2が大きければ-1、同じであれば0を返します。<br>
+</p>
+<li><b>局面情報の検索</b>
+<p>
+局面状態の比較ができるようになったので、次は局面情報を検索できるようにします。<br>
+局面情報の検索はOpening_Find()という関数で行なっています。<br>
+引数は以下の通りです。
+</p>
+<p>
+self : Openingクラスへのポインタ<br>
+in_board : 検索対象の局面<br>
+in_color : 検索対象の手番<br>
+</p>
+<p>
+該当する局面情報が見つかったら局面情報へのポインタを返します。<br>
+見つからなかった場合にはNULLを返します。<br>
+</p>
+<p>
+<pre>
+static PositionInfo * Opening_Find(const Opening *self, const Board *in_board, int in_color)
+{
+	int i;
+	PositionKey key;
+
+	Board_Key(in_board, in_color, &amp;key);
+	for (i = 0; i < self->Num; i++) {
+		if (!PositionKey_Comp(&amp;key, &amp;self->Data[i].key)) {
+			return &amp;self->Data[i].info;
+		}
+	}
+	return NULL;
+}
+</pre>
+</p>
+<p>
+最初に、渡された局面から局面状態を生成します。<br>
+次に登録済みの定石データの局面状態と生成した局面状態を比較します。<br>
+目的の定石データが見つかったらそのデータが持つ局面情報へのポインタを返し、見つからなかったらNULLを返します。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="6_3.html">＜前へ＞</a>
+<a href="6_5.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

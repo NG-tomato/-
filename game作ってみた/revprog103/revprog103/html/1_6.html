@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_5.html">＜前へ＞</a>
+<a href="1_7.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.6 その他の盤面処理</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節ではこれまで述べていない盤面処理について説明します。<br>
+</p>
+<ul>
+<li><b>指定したマスの状態を調べる処理</b><br>
+<p>
+盤面を表示したい時など、あるマスの状態を調べたいことがあります。<br>
+そのようなときにはBoard_Disk()を呼び出してください。<br>
+これを行うにはDisk変数の内容を返せばよいです。<br>
+<pre>
+int Board_Disk(const Board *self, int in_pos)
+{
+	return self->Disk[in_pos];
+}
+
+</pre>
+</p>
+<li><b>指定した状態のマスの数を調べる処理</b>
+<p>
+石差計算をしたい時などには黒石、白石の数を調べなければなりません。<br>
+そのとき必要なのがBoard_CountDisks()です。<br>
+関数の内部ですが、Disk配列のうち該当する要素がいくつあるかを数えています。<br>
+全部のマスを調べているので、処理に時間がかかります。<br>
+この関数の処理を速くする方法については後で述べます。<br>
+<pre>
+int Board_CountDisks(const Board *self, int in_color)
+{
+	int result = 0;
+	int pos;
+
+	for (pos = 0; pos < NUM_DISK; pos++) {
+		if (self->Disk[pos] == in_color) {
+			result++;
+		}
+	}
+
+	return result;
+}
+</pre>
+</p>
+<li><b>位置計算を行う処理</b>
+<p>
+石のX座標、Y座標から石の位置（Disk配列の何番目か）を計算できる関数があると便利です。<br>
+またその逆も計算できると便利です。<br>
+これらの関数は以下のようになります。<br>
+<pre>
+int Board_Pos(int in_x, int in_y)
+{
+	return (in_y + 1) * (BOARD_SIZE + 1) + in_x + 1;
+}
+
+int Board_X(int in_pos)
+{
+	return in_pos % (BOARD_SIZE + 1) - 1;
+}
+
+int Board_Y(int in_pos)
+{
+	return in_pos / (BOARD_SIZE + 1) - 1;
+}
+</pre>
+</p>
+<p>
+なぜこのような式になるのかは、<a href="1_2.html">1.2節</a>の盤面イメージを見てください。<br>
+</p>
+<li><b>指定した色と逆の色を返す処理</b>
+<p>
+手番を入れ替えたいときなど、指定した色と逆の色を取得できる関数があると便利です。<br>
+これは以下のようになります。<br>
+<pre>
+#define OPPONENT_COLOR(c)			(BLACK + WHITE - c)
+
+int Board_OpponentColor(int in_color)
+{
+	return OPPONENT_COLOR(in_color);
+}
+</pre>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_5.html">＜前へ＞</a>
+<a href="1_7.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

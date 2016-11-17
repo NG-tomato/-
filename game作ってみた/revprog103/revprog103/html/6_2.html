@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="6_1.html">＜前へ＞</a>
+<a href="6_3.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>6.2 定石クラスの構造と生成</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では定石クラスの構造について説明します。<br>
+"opening.c"に定義します。<br>
+</p>
+<ul>
+<li><b>Openingクラスの構造</b>
+<p>
+まずOpeningクラスの構造を以下のように定義します。<br>
+</p>
+<p>
+<pre>
+struct _Opening
+{
+	int Num;		/* 局面データの数 */
+	int Max;		/* 保持可能な局面データの数 */
+	PositionData *Data;	/* 局面データ */
+};
+</pre>
+</p>
+<p>
+Numは現在登録されている局面データの数です。<br>
+Maxは現在確保しているメモリ領域に保持可能な局面データの数です。<br>
+Maxを超えて登録する場合には新たにメモリ領域を確保する必要があります。<br>
+Dataは局面データの配列です。<br>
+１個１個の局面データはPositionDataという型です。<br>
+次は局面データについて説明します。<br>
+</p>
+<li><b>局面データ</b>
+<p>
+局面データ構造体PositionDataを以下のように定義します。<br>
+</p>
+<p>
+<pre>
+/* 局面データ */
+typedef struct _PositionData PositionData;
+struct _PositionData
+{
+	PositionKey key;
+	PositionInfo info;
+};
+</pre>
+</p>
+<p>
+局面データはPositionKeyとPositionInfoの２つのデータで構成されます。<br>
+PositionInfoは既に出てきましたが局面の評価値等の情報を表します。<br>
+PositionKeyは、局面での石の並びと手番を表します。<br>
+</p>
+<li><b>局面状態</b>
+<p>
+局面状態を表す構造体PositionKeyの定義は以下の通りです。
+</p>
+<p>
+<pre>
+/* 盤面の状態をあらわす構造体
+   bl、bhに手番の石の状態を、wl、whに手番でない石の状態を格納する
+   石が存在する場合には各ビットを1にする */
+typedef struct _PositionKey PositionKey;
+struct _PositionKey
+{
+	unsigned long int bl;
+	unsigned long int bh;
+	unsigned long int wl;
+	unsigned long int wh;
+};
+</pre>
+</p>
+<p>
+手番の石（黒番なら黒石、白番なら白石）の状態をblとbhに格納します。<br>
+各ビットが盤面のマスに対応していて、あるマスに手番の石があればblまたはbhの対応するビットを１にします。<br>
+それぞれ32bitなので、両方で64マス分の情報を持つことができます。<br>
+（実際には処理系に依存するので、32bitになるようにblとbhの型を決めます）<br>
+wlとwhは手番でない石の状態を表します。<br>
+</p>
+<li><b>定数</b>
+<p>
+定石クラスで使用する定数について説明します。<br>
+</p>
+<p>
+<pre>
+/* 局面情報のブロックサイズ
+   PositionInfoのメモリ領域はNUM_INFO_BLOCK * sizeof(PositionInfo)
+   の整数倍確保するようにする
+*/
+#define NUM_INFO_BLOCK		0x010000
+</pre>
+</p>
+<p>
+局面情報のブロックサイズとは、局面データ用のメモリ領域を何バイトずつ確保するかを決めるための値です。<br>
+局面データの登録を頻繁に行なうと、新たにメモリ領域を確保する必要があります。<br>
+最初に多くのメモリ領域を確保するのはメモリの無駄ですし、頻繁にメモリ領域を確保しなおすのもよくありません。<br>
+そこで適当なサイズ毎にメモリ領域を確保します。<br>
+ここでは、局面データ65536個（16進数で0x010000）毎に新たなメモリ領域を確保するようにします。<br>
+</p>
+<li><b>定石クラスの生成</b>
+<p>
+定石クラスの構造について説明したので、次はクラスの生成関数について説明します。<br>
+</p>
+<p>
+<pre>
+static int Opening_Initialize(Opening *self)
+{
+	memset(self, 0, sizeof(Opening));
+	self->Num = 0;
+	self->Max = NUM_INFO_BLOCK;
+	self->Data = malloc(self->Max * sizeof(PositionData));
+	if (!self->Data) {
+		return 0;
+	}
+	return 1;
+}
+
+Opening *Opening_New(void)
+{
+	Opening *self;
+	self = malloc(sizeof(Opening));
+	if (self) {
+		if (!Opening_Initialize(self)) {
+			Opening_Delete(self);
+			self = NULL;
+		}
+	}
+	return self;
+}
+</pre>
+</p>
+<p>
+Openingクラスに必要なメモリ領域の確保を行なっています。<br>
+定石データは１個も登録していないので、メンバNumは0にしておきます。<br>
+メンバMaxはNUM_INFO_BLOCKにしておき、定石データ用の領域をその分確保します。<br>
+</p>
+<li><b>定石クラスの破棄</b>
+<p>
+次に定石クラスを破棄する関数Opening_Delete()を記述します。<br>
+生成時に確保したメモリ領域を解放します。<br>
+</p>
+<p>
+<pre>
+static void Opening_Finalize(Opening *self)
+{
+	if (self->Data) {
+		free(self->Data);
+	}
+}
+
+void Opening_Delete(Opening *self)
+{
+	Opening_Finalize(self);
+	free(self);
+}
+</pre>
+</p>
+</ul>
+<p>
+次節は定石データをファイルから読み込んだり、ファイルに書き込んだりする処理について説明します。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="6_1.html">＜前へ＞</a>
+<a href="6_3.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

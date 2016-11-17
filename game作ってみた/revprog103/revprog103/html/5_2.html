@@ -1,0 +1,301 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="5_1.html">＜前へ＞</a>
+<a href="5_3.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>5.2 パターンの初期化</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節ではBoardクラスでのパターン初期化について説明します。<br>
+"board.c"の修正を行ないます。<br>
+</p>
+<ul>
+<li><b>定数とメンバ変数の追加</b>
+<p>
+まず最初に１マスに関わるパターンの最大数を定義します。<br>
+これは、１マスの状態が変わったときに最大何個のパターンが更新されるのかという値です。<br>
+B2、B7、G2、G7の状態が変わったときに６個のパターンが更新され、これが最大値です。<br>
+</p>
+<p>
+<pre>
+#define NUM_PATTERN_DIFF	6
+</pre>
+<p>
+次にBoard構造体のメンバ変数を追加します。<br>
+各変数の意味は以下のようになっています。
+Pattern : パターンの状態<br>
+PatternID : あるマスの状態が変わったときに更新するパターンのID<br>
+PatternDiff : あるマスの状態が変わったときに更新するパターンの状態の差分<br>
+</p>
+<pre>
+struct _Board
+{
+	int Disk[NUM_DISK];
+	int Stack[NUM_STACK];
+	int *Sp;
+	int DiskNum[3];
+<font color="red">	int Pattern[NUM_PATTERN_ID];
+	int PatternID[NUM_DISK][NUM_PATTERN_DIFF];
+	int PatternDiff[NUM_DISK][NUM_PATTERN_DIFF];</font>
+};
+</pre>
+</p>
+<li><b>パターン更新差分の初期化</b>
+<p>
+メンバ変数を追加したので、それぞれを初期化する処理が必要です。<br>
+まずはPatternIDメンバとPatternDiffメンバの初期化を行ないます。<br>
+</p>
+<p>
+最初に、指定されたパターンに対してPatternIDとPatternDiffの設定を行なう関数Board_AddPattern()を記述します。<br>
+この関数は、例えば「A4が空きから黒になったらPATTERN_ID_LINE4_1（A4-H4のパターン）を1増やす」という値を設定します。<br>
+この例ではPatternIDにPATTERN_ID_LINE4_1を代入し、PatternDiffに1を代入します。<br>
+引数は以下の通りです。<br>
+self : Boardクラスへのポインタ<br>
+in_id : パターンID<br>
+in_pos_list : パターンを構成するマスのリスト<br>
+in_num : パターンを構成するマスの数<br>
+</p>
+<p>
+<pre>
+static void Board_AddPattern(Board *self, int in_id, const int *in_pos_list, int in_num)
+{
+	int i, j, n;
+
+	n = 1;
+	for (i = 0; i < in_num; i++) {
+		for (j = 0; self->PatternDiff[in_pos_list[i]][j] != 0; j++) {
+		}
+		self->PatternID[in_pos_list[i]][j] = in_id;
+		self->PatternDiff[in_pos_list[i]][j] = n;
+		n *= 3;
+	}
+}
+</pre>
+</p>
+<p>
+次に、全パターンに対してPatternIDとPatternDiffの設定を行なう関数Board_InitializePatternDiff()を記述します。<br>
+最初にPatternIDとPatternDiffを0で初期化し、次に各パターンに対してBoard_AddPattern()を呼び出します。<br>
+</p>
+<p>
+<pre>
+static void Board_InitializePatternDiff(Board *self)
+{
+	int i, j;
+	int pattern_list[][9] = {
+		{ A4, B4, C4, D4, E4, F4, G4, H4, -1 },
+		{ A5, B5, C5, D5, E5, F5, G5, H5, -1 },
+		{ D1, D2, D3, D4, D5, D6, D7, D8, -1 },
+		{ E1, E2, E3, E4, E5, E6, E7, E8, -1 },
+		{ A3, B3, C3, D3, E3, F3, G3, H3, -1 },
+		{ A6, B6, C6, D6, E6, F6, G6, H6, -1 },
+		{ C1, C2, C3, C4, C5, C6, C7, C8, -1 },
+		{ F1, F2, F3, F4, F5, F6, F7, F8, -1 },
+		{ A2, B2, C2, D2, E2, F2, G2, H2, -1 },
+		{ A7, B7, C7, D7, E7, F7, G7, H7, -1 },
+		{ B1, B2, B3, B4, B5, B6, B7, B8, -1 },
+		{ G1, G2, G3, G4, G5, G6, G7, G8, -1 },
+		{ A1, B2, C3, D4, E5, F6, G7, H8, -1 },
+		{ A8, B7, C6, D5, E4, F3, G2, H1, -1 },
+		{ A2, B3, C4, D5, E6, F7, G8, -1 },
+		{ B1, C2, D3, E4, F5, G6, H7, -1 },
+		{ A7, B6, C5, D4, E3, F2, G1, -1 },
+		{ B8, C7, D6, E5, F4, G3, H2, -1 },
+		{ A3, B4, C5, D6, E7, F8, -1 },
+		{ C1, D2, E3, F4, G5, H6, -1 },
+		{ A6, B5, C4, D3, E2, F1, -1 },
+		{ C8, D7, E6, F5, G4, H3, -1 },
+		{ A4, B5, C6, D7, E8, -1 },
+		{ D1, E2, F3, G4, H5, -1 },
+		{ A5, B4, C3, D2, E1, -1 },
+		{ D8, E7, F6, G5, H4, -1 },
+		{ A5, B6, C7, D8, -1 },
+		{ E1, F2, G3, H4, -1 },
+		{ A4, B3, C2, D1, -1 },
+		{ E8, F7, G6, H5, -1 },
+		{ B2, G1, F1, E1, D1, C1, B1, A1, -1 },
+		{ G2, B1, C1, D1, E1, F1, G1, H1, -1 },
+		{ B7, G8, F8, E8, D8, C8, B8, A8, -1 },
+		{ G7, B8, C8, D8, E8, F8, G8, H8, -1 },
+		{ B2, A7, A6, A5, A4, A3, A2, A1, -1 },
+		{ B7, A2, A3, A4, A5, A6, A7, A8, -1 },
+		{ G2, H7, H6, H5, H4, H3, H2, H1, -1 },
+		{ G7, H2, H3, H4, H5, H6, H7, H8, -1 },
+		{ B3, A3, C2, B2, A2, C1, B1, A1, -1 },
+		{ G3, H3, F2, G2, H2, F1, G1, H1, -1 },
+		{ B6, A6, C7, B7, A7, C8, B8, A8, -1 },
+		{ G6, H6, F7, G7, H7, F8, G8, H8, -1 },
+		{ -1 }
+	};
+
+	for (i = 0; i < NUM_DISK; i++) {
+		for (j = 0; j < NUM_PATTERN_DIFF; j++) {
+			self->PatternID[i][j] = 0;
+			self->PatternDiff[i][j] = 0;
+		}
+	}
+	for (i = 0; pattern_list[i][0] >= 0; i++) {
+		for (j = 0; pattern_list[i][j] >= 0; j++) {}
+		Board_AddPattern(self, i, pattern_list[i], j);
+	}
+}
+</pre>
+</p>
+<p>
+Board_InitializePatternDiff()はBoardの生成時に呼び出します。<br>
+</p>
+<p>
+<pre>
+Board *Board_New(void)
+{
+	Board *self;
+
+	self = malloc(sizeof(Board));
+	if (self) {
+<font color="red">		Board_InitializePatternDiff(self);</font>
+		Board_Clear(self);
+	}
+	return self;
+}
+</pre>
+</p>
+<li><b>パターンの初期化</b>
+<p>
+メンバ変数Patternを初期化するBoard_InitializePattern()は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+void Board_InitializePattern(Board *self)
+{
+	int i;
+	for (i = 0; i < NUM_PATTERN_ID; i++) {
+		self->Pattern[i] = 0;
+	}
+	for (i = 0; i < NUM_DISK; i++) {
+		if (self->Disk[i] == BLACK) {
+			Board_PutSquareBlack(self, i);
+		} else if (self->Disk[i] == WHITE) {
+			Board_PutSquareWhite(self, i);
+		}
+	}
+}
+</pre>
+</p>
+<p>
+まず最初にPatternの内容を0で初期化します。<br>
+次に各マスの状態に応じてBoard_PutSquareBlack()またはBoard_PutSquareWhite()を呼び出します。<br>
+これらの関数は以下のようになっています。<br>
+</p>
+<pre>
+static void Board_PutSquareBlack(Board *self, int in_pos)
+{
+	self->Disk[in_pos] = BLACK;
+	self->Pattern[self->PatternID[in_pos][0]] += self->PatternDiff[in_pos][0];
+	self->Pattern[self->PatternID[in_pos][1]] += self->PatternDiff[in_pos][1];
+	self->Pattern[self->PatternID[in_pos][2]] += self->PatternDiff[in_pos][2];
+	self->Pattern[self->PatternID[in_pos][3]] += self->PatternDiff[in_pos][3];
+	self->Pattern[self->PatternID[in_pos][4]] += self->PatternDiff[in_pos][4];
+	self->Pattern[self->PatternID[in_pos][5]] += self->PatternDiff[in_pos][5];
+}
+
+static void Board_PutSquareWhite(Board *self, int in_pos)
+{
+	self->Disk[in_pos] = WHITE;
+	self->Pattern[self->PatternID[in_pos][0]] += self->PatternDiff[in_pos][0] + self->PatternDiff[in_pos][0];
+	self->Pattern[self->PatternID[in_pos][1]] += self->PatternDiff[in_pos][1] + self->PatternDiff[in_pos][1];
+	self->Pattern[self->PatternID[in_pos][2]] += self->PatternDiff[in_pos][2] + self->PatternDiff[in_pos][2];
+	self->Pattern[self->PatternID[in_pos][3]] += self->PatternDiff[in_pos][3] + self->PatternDiff[in_pos][3];
+	self->Pattern[self->PatternID[in_pos][4]] += self->PatternDiff[in_pos][4] + self->PatternDiff[in_pos][4];
+	self->Pattern[self->PatternID[in_pos][5]] += self->PatternDiff[in_pos][5] + self->PatternDiff[in_pos][5];
+}
+</pre>
+<p>
+指定されたマスに関連するパターンの状態をPatternDiff分（白石を置く場合にはその２倍）増やしています。<br>
+同じような処理を６回行なっていますが、これは関連するパターンが最大６個あるためです。<br>
+もし関連するパターンの数が６個より少ない場合、例えば４個しかない場合には<br>
+self->PatternDiff[in_pos][4]とself->PatternDiff[in_pos][5]がどちらも０になるため、４個のパターンだけが更新されます。<br></p>
+<li><b>パターンの初期化呼び出し</b>
+<p>
+以下の関数でパターンの初期化を行ないます。<br>
+</p>
+<p>
+<pre>
+void Board_Clear(Board *self)
+{
+	int i, j;
+
+	for (i = 0; i < NUM_DISK; i++) {
+		self->Disk[i] = WALL;
+	}
+	for (i = 0; i < BOARD_SIZE; i++) {
+		for (j = 0; j < BOARD_SIZE; j++) {
+			self->Disk[Board_Pos(i, j)] = EMPTY;
+		}
+	}
+	self->Disk[E4] = BLACK;
+	self->Disk[D5] = BLACK;
+	self->Disk[D4] = WHITE;
+	self->Disk[E5] = WHITE;
+
+	self->Sp = self->Stack;
+	self->DiskNum[BLACK] = 2;
+	self->DiskNum[WHITE] = 2;
+	self->DiskNum[EMPTY] = BOARD_SIZE * BOARD_SIZE - 4;
+
+<font color="red">	Board_InitializePattern(self);</font>
+}
+</pre>
+<pre>
+void Board_Reverse(Board *self)
+{
+	int pos;
+	int *p;
+	int n;
+
+	for (pos = 0; pos < NUM_DISK; pos++) {
+		if (self->Disk[pos] == BLACK) {
+			self->Disk[pos] = WHITE;
+			self->DiskNum[BLACK]--;
+			self->DiskNum[WHITE]++;
+		} else if (self->Disk[pos] == WHITE) {
+			self->Disk[pos] = BLACK;
+			self->DiskNum[WHITE]--;
+			self->DiskNum[BLACK]++;
+		}
+	}
+	p = self->Sp;
+	for (p = self->Sp; p > self->Stack;) {
+		p--;
+		n = *p;
+		p--;
+		*p = OPPONENT_COLOR(*p);
+		p -= n + 1;
+	}
+<font color="red">	Board_InitializePattern(self);</font>
+}
+</pre>
+</p>
+</ul>
+<p>
+次節では着手時のパターン更新を行ないます。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="5_1.html">＜前へ＞</a>
+<a href="5_3.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

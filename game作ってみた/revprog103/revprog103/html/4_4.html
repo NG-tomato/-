@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="4_3.html">＜前へ＞</a>
+<a href="4_5.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>4.4 終盤探索のリーフ展開</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では、終盤探索時に最後の１手の処理を修正します。<br>
+「最後の１手」というのは、空きマスが１箇所しかないときの手という意味です。<br>
+</p>
+<p>
+空きマスが１箇所しかない場合には、着手して１手戻す必要はありません。<br>
+現在の石差と、空きマスに着手した場合に返す石の数とから、最終の石差を計算できるためです。<br>
+例えば空きマスが１箇所の時点で黒番の時には以下のような処理を行ないます。<br>
+</p>
+<p>
+<ul>
+<li>着手前の石差をＳ石とする
+<li>空きマスに黒が着手できてＴ石返せるなら（Ｓ＋Ｔ）石が最終の石差
+<li>空きマスに黒が着手できず白が着手できてＲ石返せるなら（Ｓ＋Ｒ）石が最終の石差
+<li>空きマスにどちらも着手できないならＳ石が最終の石差
+</ul>
+</p>
+<ul>
+<li><b>候補手リストの定義</b>
+<p>
+それでは終盤探索の修正を行ないましょう。<br>
+修正する関数はCom_EndSearch()だけです。<br>
+</p>
+<p>
+修正前はin_depthが0のときに石差を返す処理を行なっていました。<br>
+修正後はin_depthが1のときに前述の処理を行ないます。<br>
+</p>
+<p>
+<pre>
+static int Com_EndSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+
+<font color="red">	/* 残り１マスのときには着手せず返せる石数のみを調べる */
+	if (in_depth == 1) {
+		self->Node++;
+		p = self->Moves->Next;
+		value = Board_CountFlips(self->Board, in_color, p->Pos);
+		max = Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+		if (value > 0) {
+			*out_move = p->Pos;
+			return max + value + value + 1;
+		}
+		value = Board_CountFlips(self->Board, in_opponent, self->Moves->Next->Pos);
+		if (value > 0) {
+			*out_move = PASS;
+			return max - value - value - 1;
+		}
+		*out_move = NOMOVE;
+		return max;
+	}</font>
+	*out_move = NOMOVE;
+	for (p = self->Moves->Next; p; p = p->Next) {
+		if (Board_Flip(self->Board, in_color, p->Pos)) {
+			RemoveList(p);
+			if (!can_move) {
+				*out_move = p->Pos;
+				can_move = 1;
+			}
+			value = -Com_EndSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+			Board_Unflip(self->Board);
+			RecoverList(p);
+			if (value > max) {
+				max = value;
+				*out_move = p->Pos;
+				if (max >= in_beta) {
+					return in_beta;
+				}
+			}
+		}
+	}
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			max = Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+		} else {
+			*out_move = PASS;
+			max = -Com_EndSearch(self, in_depth, -in_beta, -max, in_opponent, in_color, 1, &amp;move);
+		}
+	}
+	return max;
+}
+</pre>
+</p>
+<p>
+今回の修正によって数％ですが速度が向上しているようです。<br>
+探索時１ノードあたりの速度を向上する修正は本節までです。<br>
+次節では探索ノード数を減らす工夫を行ないます。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="4_3.html">＜前へ＞</a>
+<a href="4_5.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

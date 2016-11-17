@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="4_1.html">＜前へ＞</a>
+<a href="4_3.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>4.2 着手の高速化</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では着手処理を高速化します。<br>
+着手処理も頻繁に呼ばれるので、着手処理の高速化によって全体の高速化に貢献できます。
+</p>
+<ul>
+<li><b>１方向に石を返す処理の改善</b>
+<p>
+まずは１方向に石を返す処理Board_FlipLine()を修正します。<br>
+修正前に比べて長くなりましたが、全体を載せます。
+</p>
+<p>
+<pre>
+static int Board_FlipLine(Board *self, int in_color, int in_pos, int in_dir)
+{
+	int result = 0;
+	int op = OPPONENT_COLOR(in_color);
+	int pos;
+
+	pos = in_pos + in_dir;
+	if (self->Disk[pos] != op) {
+		return 0;
+	}
+<font color="red">	/* ループの展開 */
+	pos += in_dir;
+	if (self->Disk[pos] == op) {
+		pos += in_dir;
+		if (self->Disk[pos] == op) {
+			pos += in_dir;
+			if (self->Disk[pos] == op) {
+				pos += in_dir;
+				if (self->Disk[pos] == op) {
+					pos += in_dir;
+					if (self->Disk[pos] == op) {
+						pos += in_dir;
+						if (self->Disk[pos] != in_color) {
+							return 0;
+						}
+						pos -= in_dir;
+						result ++;
+						self->Disk[pos] = in_color;
+						BOARD_STACK_PUSH(self, pos);
+					} else if (self->Disk[pos] != in_color) {
+						return 0;
+					}
+					pos -= in_dir;
+					result ++;
+					self->Disk[pos] = in_color;
+					BOARD_STACK_PUSH(self, pos);
+				} else if (self->Disk[pos] != in_color) {
+					return 0;
+				}
+				pos -= in_dir;
+				result ++;
+				self->Disk[pos] = in_color;
+				BOARD_STACK_PUSH(self, pos);
+			} else if (self->Disk[pos] != in_color) {
+				return 0;
+			}
+			pos -= in_dir;
+			result ++;
+			self->Disk[pos] = in_color;
+			BOARD_STACK_PUSH(self, pos);
+		} else if (self->Disk[pos] != in_color) {
+			return 0;
+		}
+		pos -= in_dir;
+		result ++;
+		self->Disk[pos] = in_color;
+		BOARD_STACK_PUSH(self, pos);
+	} else if (self->Disk[pos] != in_color) {
+		return 0;
+	}
+	pos -= in_dir;
+	result ++;
+	self->Disk[pos] = in_color;
+	BOARD_STACK_PUSH(self, pos);</font>
+
+	return result;
+}
+</pre>
+</p>
+<p>
+修正前のBoard_FlipLine()ではforループを使用して各マスの状態を調べていました。<br>
+このforループはループの最大回数が決まっているので、展開することができます。<br>
+展開したものが上のソースコードです。<br>
+かなり見にくくなっていますが、修正前と同じ処理を行なっています。<br>
+</p>
+<p>
+ループの展開を行なうと、ループ変数の増減と比較の処理がなくなります。
+</p>
+<p>
+<pre>
+for (i = 0; i < 10; i++) { （処理） }
+</pre>
+</p>
+<p>
+というforループでは、（処理）の部分を10回記述すればi++とiを10と比較する処理がなくなります。<br>
+このためわずかですが処理を速くすることができます。<br>
+</p>
+<li><b>返す方向を限定する</b>
+<p>
+B2に着手することを考えてみましょう。<br>
+このとき、石を返すことができるのは右方向、下方向、右下方向の３方向だけです。<br>
+Board_Flip()では、全部の方向に対してBoard_FlipLine()を呼び出していますがB2に着手する場合には上記３方向に対して呼び出せば十分です。<br>
+呼び出す関数を少なくすることで無駄な処理を減らすことができます。<br>
+これをB2だけでなく全てのマスに対して適用してみましょう。<br>
+</p>
+<p>
+<pre>
+int Board_Flip(Board *self, int in_color, int in_pos)
+{
+	int result = 0;
+
+	if (self->Disk[in_pos] != EMPTY) {
+		return 0;
+	}
+<font color="red">	/* 必要な方向だけを調べるようにする */
+	switch (in_pos) {
+	case C1:
+	case C2:
+	case D1:
+	case D2:
+	case E1:
+	case E2:
+	case F1:
+	case F2:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	case C8:
+	case C7:
+	case D8:
+	case D7:
+	case E8:
+	case E7:
+	case F8:
+	case F7:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+		break;
+	case A3:
+	case A4:
+	case A5:
+	case A6:
+	case B3:
+	case B4:
+	case B5:
+	case B6:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	case H3:
+	case H4:
+	case H5:
+	case H6:
+	case G3:
+	case G4:
+	case G5:
+	case G6:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+		break;
+	case A1:
+	case A2:
+	case B1:
+	case B2:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	case A8:
+	case A7:
+	case B8:
+	case B7:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+		break;
+	case H1:
+	case H2:
+	case G1:
+	case G2:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+		break;
+	case H8:
+	case H7:
+	case G8:
+	case G7:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+		break;
+	default:
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_UP_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+		result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+		break;
+	}</font>
+	if (result > 0) {
+		self->Disk[in_pos] = in_color;
+		BOARD_STACK_PUSH(self, in_pos);
+		BOARD_STACK_PUSH(self, OPPONENT_COLOR(in_color));
+		BOARD_STACK_PUSH(self, result);
+		self->DiskNum[in_color] += result + 1;
+		self->DiskNum[OPPONENT_COLOR(in_color)] -= result;
+		self->DiskNum[EMPTY]--;
+	}
+
+	return result;
+}
+</pre>
+</p>
+<p>
+ここには掲載しませんが、Board_CountFlips()に対しても同様の修正を行ないます。
+</p>
+<p>
+今度はどの程度速くなったでしょうか。<br>
+筆者の環境では10%から20%速くなりました。<br>
+Boardの改善は本節までです。<br>
+次節は探索の改善を行ないます。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="4_1.html">＜前へ＞</a>
+<a href="4_3.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

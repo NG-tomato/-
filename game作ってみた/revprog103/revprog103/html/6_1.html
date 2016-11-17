@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="5_4.html">＜前へ＞</a>
+<a href="6_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>6.1 定石関連関数の定義</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章では定石の導入を行ないます。<br>
+定石とは序盤での決まった打ち方を言います。<br>
+最善と考えられている手順もありますし、そうでない手順もあります。<br>
+コンピュータリバーシで定石を導入することの利点はいくつかあります。<br>
+</p>
+<p>
+<ul>
+<li>序盤の思考時間を削減できる
+<li>序盤でいきなり不利になる心配がなくなる
+<li>序盤の進め方が１通りでなくなるので対戦相手を飽きさせない
+</ul>
+</p>
+<p>
+本解説では主に３番目を理由として定石の導入を行ないます。<br>
+最初に定石関連の関数を定義します。<br>
+"opening.h"に定義してあります。<br>
+</p>
+<ul>
+<li><b>Opening *Opening_New(void)</b>
+<p>
+定石クラスの生成を行ないます。<br>
+引数 なし<br>
+戻り値 生成した定石クラスへのポインタ。生成に失敗した場合にはNULLを返します。<br>
+</p>
+<li><b>void Opening_Delete(Opening *self)</b>
+<p>
+定石クラスの破棄を行ないます。
+引数<br>
+&nbsp;self : Openingクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>int Opening_Load(Opening *self, const char *in_file_name)</b>
+<p>
+ファイルから定石データを読み込みます。<br>
+引数<br>
+&nbsp;self : Openingクラスへのポインタ<br>
+&nbsp;in_file_name : 定石データファイル名<br>
+戻り値 読み込みに成功したら1、失敗したら0<br>
+</p>
+<li><b>int Opening_Save(const Opening *self, const char *in_file_name)</b>
+<p>
+ファイルに定石データを書き込みます。<br>
+引数<br>
+&nbsp;self : Openingクラスへのポインタ<br>
+&nbsp;in_file_name : 定石データファイル名<br>
+戻り値 書き込みに成功したら1、失敗したら0<br>
+</p>
+<li><b>int Opening_Info(const Opening *self, const Board *in_board, int in_color, PositionInfo *out_info)</b>
+<p>
+局面と手番とを指定して、登録されている局面情報を取得します。<br>
+取得した局面情報はout_infoに格納されます。
+引数<br>
+&nbsp;self : Openingクラスへのポインタ<br>
+&nbsp;in_board : 情報を取得したい局面<br>
+&nbsp;in_color : 情報を取得したい手番<br>
+&nbsp;out_info : 局面情報へのポインタ<br>
+戻り値 局面情報が登録されていれば1、登録されていなければ0<br>
+</p>
+<li><b>int Opening_SetInfo(Opening *self, const Board *in_board, int in_color, const PositionInfo *in_info)</b>
+<p>
+局面情報を登録します。<br>
+引数<br>
+&nbsp;self : Openingクラスへのポインタ<br>
+&nbsp;in_board : 情報を登録する局面<br>
+&nbsp;in_color : 情報を登録する手番<br>
+&nbsp;in_info : 登録する局面情報へのポインタ<br>
+戻り値 登録に成功したら1、失敗したら0<br>
+</p>
+</ul>
+<p>
+局面情報の構造体は以下のように定義します。<br>
+メンバ変数には評価値しかありませんが、必要に応じてメンバを増やすこともできます。<br>
+</p>
+<p>
+<pre>
+/* 局面情報 */
+typedef struct _PositionInfo PositionInfo;
+struct _PositionInfo
+{
+	int Value;		/* 評価値 */
+};
+</pre>
+</p>
+<p>
+また局面情報の評価値の取得と設定を行なうマクロを定義します。<br>
+</p>
+<p>
+<pre>
+#define PositionInfo_Value(self)					((self)->Value)
+#define PositionInfo_SetValue(self, in_value)		((self)->Value = (in_value))
+</pre>
+</p>
+<p>
+次節からは上記関数の実装を行ないます。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="5_4.html">＜前へ＞</a>
+<a href="6_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

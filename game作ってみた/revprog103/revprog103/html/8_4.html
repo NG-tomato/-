@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="8_3.html">＜前へ＞</a>
+<a href="8_5.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>8.4 置換表の構造と生成</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では置換表クラスの実装を行います。<br>
+"hash.c"に記述します。<br>
+</p>
+<p>
+<ul>
+<li><b>Hashクラスの構造</b>
+<p>
+最初にHashクラスの構造を定義します。<br>
+</p>
+<p>
+<pre>
+struct _Hash
+{
+	int Num;
+	unsigned long Mask;
+	HashData *Data;
+	int GetNum;
+	int HitNum;
+};
+</pre>
+</p>
+<p>
+Numは登録可能な局面データの数です。<br>
+Maskはハッシュ値から局面データのインデックスを求めるのに使用します。<br>
+例えばNumが0x1000であれば、Maskを0x0fffとしてハッシュ値とMaskのANDをとった値がインデックスとなります。<br>
+Dataは局面データの配列です。<br>
+GetNumはHash_Get()が呼ばれた回数です。<br>
+HitNumはHash_Get()が1を返した回数です。<br>
+</p>
+<li><b>局面データ</b>
+<p>
+局面データHashDataは以下のようになっています。<br>
+ハッシュ値と局面情報から構成されています。<br>
+</p>
+<p>
+<pre>
+struct _HashData
+{
+	HashValue Value;
+	HashInfo Info;
+};
+typedef struct _HashData HashData;
+</pre>
+</p>
+<li><b>置換表クラスの生成</b>
+<p>
+次に置換表クラスの生成を行います。<br>
+</p>
+<p>
+<pre>
+static int Hash_Initialize(Hash *self, int in_size)
+{
+	memset(self, 0, sizeof(Hash));
+	self->Num = 1 << in_size;
+	self->Mask = (1 << in_size) - 1;
+	self->Data = malloc(sizeof(HashData) * self->Num);
+	if (!self->Data) {
+		return 0;
+	}
+	Hash_Clear(self);
+	return 1;
+}
+
+Hash *Hash_New(int in_size)
+{
+	Hash *self;
+
+	self = malloc(sizeof(Hash));
+	if (self) {
+		if (!Hash_Initialize(self, in_size)) {
+			Hash_Delete(self);
+			self = NULL;
+		}
+	}
+	return self;
+}
+</pre>
+</p>
+<p>
+Hashクラスに必要なメモリの確保を行っています。<br>
+同時にNumとMaskの設定も行います。<br>
+Hash_Clear()を呼び出して局面データの初期化を行っていますが、この処理については後述します。<br>
+</p>
+<li><b>置換表クラスの破棄</b>
+<p>
+生成関数を実装したので、次は破棄関数の実装を行います。<br>
+内容は生成時に確保したメモリを解放するだけです。<br>
+</p>
+<p>
+<pre>
+static void Hash_Finalize(Hash *self)
+{
+	if (self->Data) {
+		free(self->Data);
+	}
+}
+
+void Hash_Delete(Hash *self)
+{
+	Hash_Finalize(self);
+	free(self);
+}
+</pre>
+</p>
+<li><b>局面データの初期化</b>
+<p>
+生成時に呼び出していたHash_Clear()の内部は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+void Hash_Clear(Hash *self)
+{
+	int i;
+
+	for (i = 0; i < self->Num; i++) {
+		self->Data[i].Value.Low = ~i;
+	}
+	self->GetNum = 0;
+	self->HitNum = 0;
+}
+</pre>
+</p>
+<p>
+前に説明しましたが、ハッシュ値と局面データのインデックスは下位n bit(nは置換表の大きさに依存)が一致しています。<br>
+そこで各データのハッシュ値の下位をインデックスを反転させた値にすることで「何も登録されていない状態」にします。<br>
+その後GetNum、HitNumを0にします。
+</p>
+</ul>
+<p>
+次節では局面情報の登録、取得処理を実装します。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="8_3.html">＜前へ＞</a>
+<a href="8_5.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

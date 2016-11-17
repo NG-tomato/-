@@ -1,0 +1,346 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="8_5.html">＜前へ＞</a>
+<a href="8_7.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>8.6 置換表を使用した探索</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では置換表を利用した探索を行います。<br>
+修正を行うファイルは"com.c"です。<br>
+</p>
+<p>
+<ul>
+<li><b>置換表の追加</b>
+<p>
+Comクラスに置換表を追加します。<br>
+最初にメンバ変数の追加します。<br>
+</p>
+<p>
+<pre>
+struct _Com
+{
+	Board *Board;
+	Evaluator *Evaluator;
+	Opening *Opening;
+<font color="red">	Hash *Hash;</font>
+	int UseOpening;
+	int MidDepth;
+	int WLDDepth;
+	int ExactDepth;
+	int Node;
+	MoveList Moves[BOARD_SIZE * BOARD_SIZE];
+	int MPCInfoNum;
+	MPCInfo *MPCInfo;
+};
+</pre>
+</p>
+<p>
+次にComクラスを生成するときにHashクラスを生成するようにします。<br>
+</p>
+<p>
+<pre>
+static int Com_Initialize(Com *self, Evaluator *evaluator, Opening *opening)
+{
+	memset(self, 0, sizeof(Com));
+	self->Board = Board_New();
+	if (!self->Board) {
+		return 0;
+	}
+	self->Evaluator = evaluator;
+	if (!self->Evaluator) {
+		return 0;
+	}
+	self->Opening = opening;
+	if (!self->Opening) {
+		return 0;
+	}
+<font color="red">	self->Hash = Hash_New(HASH_SIZE);
+	if (!self->Hash) {
+		return 0;
+	}</font>
+	Hash_Clear(self->Hash);
+	self->UseOpening = 0;
+	self->MidDepth = 1;
+	self->WLDDepth = 1;
+	self->ExactDepth = 1;
+	self->Node = 0;
+	self->MPCInfoNum = 0;
+	self->MPCInfo = NULL;
+	return 1;
+}
+</pre>
+</p>
+<p>
+HADH_SIZEは以下のように定義しました。<br>
+局面表の大きさは20bit（1048576局）になります。<br>
+</p>
+<p>
+<pre>
+#define HASH_SIZE	20
+</pre>
+</p>
+<li><b>置換表の初期化</b>
+<p>
+探索時に置換表の初期化を行っいます。<br>
+ただし置換表そのものを初期化するのではなく、Hash_ClearInfo()を呼ぶだけにします。<br>
+</p>
+<p>
+<pre>
+int Com_NextMove(Com *self, const Board *in_board, int in_color, int *out_value)
+{
+	int result;
+	int left;
+	int value;
+	int color;
+
+	Board_Copy(in_board, self->Board);
+	self->Node = 0;
+	left = Board_CountDisks(self->Board, EMPTY);
+	Com_MakeList(self);
+	Board_InitializePattern(self->Board);
+<font color="red">	Hash_ClearInfo(self->Hash);</font>
+	value = Com_OpeningSearch(self, in_color, Board_OpponentColor(in_color), &amp;result);
+	（中略）
+}
+</pre>
+</p>
+<li><b>中盤探索</b>
+<p>
+中盤探索関数Com_MidSearch()で置換表を参照するようにします。<br>
+</p>
+<p>
+<pre>
+static int Com_MidSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+	MoveInfo info[BOARD_SIZE * BOARD_SIZE / 2];
+	int i, info_num;
+	MPCInfo *mpc_info;
+<font color="red">	HashValue hash_value;
+	HashInfo hash_info;</font>
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Evaluator_Value(self->Evaluator, self->Board);
+	}
+	if (in_depth > 2) {
+<font color="red">		Board_HashValue(self->Board, in_color, &amp;hash_value);
+		if (Hash_Get(self->Hash, &amp;hash_value, &amp;hash_info)) {
+			if (hash_info.Depth >= in_depth) {
+				if (hash_info.Upper <= in_alpha) {
+					*out_move = hash_info.Move;
+					return in_alpha;
+				} else if (hash_info.Lower >= in_beta) {
+					*out_move = hash_info.Move;
+					return in_beta;
+				} else if (hash_info.Lower >= hash_info.Upper) {
+					*out_move = hash_info.Move;
+					return hash_info.Lower;
+				}
+				if (hash_info.Upper < in_beta) {
+					in_beta = hash_info.Upper;
+				}
+				if (hash_info.Lower > in_alpha) {
+					in_alpha = hash_info.Lower;
+				}
+			} else {
+				hash_info.Depth = in_depth;
+				hash_info.Lower = -MAX_VALUE;
+				hash_info.Upper = MAX_VALUE;
+			}
+		} else {
+			hash_info.Depth = in_depth;
+			hash_info.Lower = -MAX_VALUE;
+			hash_info.Upper = MAX_VALUE;
+		}</font>
+	}
+	if (in_depth >= MPC_DEPTH_MIN &amp;&amp; in_depth < MPC_DEPTH_MIN + self->MPCInfoNum) {
+		mpc_info = &amp;self->MPCInfo[in_depth - MPC_DEPTH_MIN];
+		value = in_alpha - mpc_info->Deviation + mpc_info->Offset;
+		if (Com_MidSearch(self, mpc_info->Depth, value - 1, value, in_color, in_opponent, in_pass, out_move) < value) {
+			return in_alpha;
+		}
+		value = in_beta + mpc_info->Deviation + mpc_info->Offset;
+		if (Com_MidSearch(self, mpc_info->Depth, value, value + 1, in_color, in_opponent, in_pass, out_move) > value) {
+			return in_beta;
+		}
+	}
+	*out_move = NOMOVE;
+	if (in_depth > 2) {
+		info_num = Com_Sort(self, in_color, info);
+		if (info_num > 0) {
+			*out_move = info[0].Move->Pos;
+			can_move = 1;
+		}
+		for (i = 0; i < info_num; i++) {
+			Board_FlipPattern(self->Board, in_color, info[i].Move->Pos);
+			RemoveList(info[i].Move);
+			value = -Com_MidSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+			Board_UnflipPattern(self->Board);
+			RecoverList(info[i].Move);
+			if (value > max) {
+				max = value;
+				*out_move = info[i].Move->Pos;
+				if (max >= in_beta) {
+<font color="red">					hash_info.Lower = max;
+					hash_info.Move = *out_move;
+					Hash_Set(self->Hash, &amp;hash_value, &amp;hash_info);</font>
+					return in_beta;
+				}
+			}
+		}
+<font color="red">
+		if (*out_move != PASS) {
+			hash_info.Upper = max;
+			hash_info.Move = *out_move;
+			Hash_Set(self->Hash, &amp;hash_value, &amp;hash_info);
+		}</font>
+	} else {
+	（中略）
+}
+</pre>
+</p>
+<p>
+探索深さが2より大きい場合にだけ置換表を利用するようにしました。<br>
+最初に局面情報の取得を行います。<br>
+局面情報の取得に成功し、かつ登録情報の探索手数が現在の探索手数以上のときに、以下の処理を行います。<br>
+</p>
+<p>
+<ul>
+<li>登録情報の上限がα値以下の場合にはα値を返して関数を終了する。
+<li>登録情報の下限がβ値以上の場合にはβ値を返して関数を終了する。
+<li>登録情報の上限が下限以上の場合には登録局面の評価値が確定しているので、その評価値を返して関数を終了する。
+<li>登録情報の上限がβ値よりも小さい場合にはβ値を上限に設定する。
+<li>登録情報の下限がα値よりも大きい場合にはα値を下限に設定する。
+</ul>
+</p>
+<p>
+また関数終了時には、局面情報を設定して置換表に登録を行います。<br>
+</p>
+<li><b>終盤探索</b>
+<p>
+終盤探索関数Com_EndSearch()でも置換表を参照するようにします。<br>
+内容はCom_MidSearch()と同じなので、説明は割愛します。<br>
+</p>
+<p>
+<pre>
+static int Com_EndSearch(Com *self, int in_depth, int in_alpha, int in_beta, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	MoveList *p;
+	int value, max = in_alpha;
+	int can_move = 0;
+	int move;
+	MoveInfo info[BOARD_SIZE * BOARD_SIZE / 2];
+	int i, info_num;
+<font color="red">	HashValue hash_value;
+	HashInfo hash_info;</font>
+
+	if (in_depth == 1) {
+		self->Node++;
+		p = self->Moves->Next;
+		value = Board_CountFlips(self->Board, in_color, p->Pos);
+		max = Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+		if (value > 0) {
+			*out_move = p->Pos;
+			return max + value + value + 1;
+		}
+		value = Board_CountFlips(self->Board, in_opponent, self->Moves->Next->Pos);
+		if (value > 0) {
+			*out_move = PASS;
+			return max - value - value - 1;
+		}
+		*out_move = NOMOVE;
+		return max;
+	}
+	*out_move = NOMOVE;
+	if (in_depth > 8) {
+<font color="red">		Board_HashValue(self->Board, in_color, &amp;hash_value);
+		if (Hash_Get(self->Hash, &amp;hash_value, &amp;hash_info)) {
+			if (hash_info.Depth >= in_depth) {
+				if (hash_info.Upper <= in_alpha) {
+					*out_move = hash_info.Move;
+					return in_alpha;
+				} else if (hash_info.Lower >= in_beta) {
+					*out_move = hash_info.Move;
+					return in_beta;
+				} else if (hash_info.Lower >= hash_info.Upper) {
+					*out_move = hash_info.Move;
+					return hash_info.Lower;
+				}
+				if (hash_info.Upper < in_beta) {
+					in_beta = hash_info.Upper;
+				}
+				if (hash_info.Lower > in_alpha) {
+					in_alpha = hash_info.Lower;
+				}
+			} else {
+				hash_info.Depth = in_depth;
+				hash_info.Lower = -MAX_VALUE;
+				hash_info.Upper = MAX_VALUE;
+			}
+		} else {
+			hash_info.Depth = in_depth;
+			hash_info.Lower = -MAX_VALUE;
+			hash_info.Upper = MAX_VALUE;
+		}</font>
+		info_num = Com_Sort(self, in_color, info);
+		if (info_num > 0) {
+			*out_move = info[0].Move->Pos;
+			can_move = 1;
+		}
+		for (i = 0; i < info_num; i++) {
+			Board_FlipPattern(self->Board, in_color, info[i].Move->Pos);
+			RemoveList(info[i].Move);
+			value = -Com_EndSearch(self, in_depth - 1, -in_beta, -max, in_opponent, in_color, 0, &amp;move);
+			Board_UnflipPattern(self->Board);
+			RecoverList(info[i].Move);
+			if (value > max) {
+				max = value;
+				*out_move = info[i].Move->Pos;
+				if (max >= in_beta) {
+<font color="red">					hash_info.Lower = max;
+					hash_info.Move = *out_move;
+					Hash_Set(self->Hash, &amp;hash_value, &amp;hash_info);</font>
+					return in_beta;
+				}
+			}
+		}
+		if (*out_move != PASS &amp;&amp; *out_move != NOMOVE) {
+<font color="red">			hash_info.Upper = max;
+			hash_info.Move = *out_move;
+			Hash_Set(self->Hash, &amp;hash_value, &amp;hash_info);</font>
+		}
+	} else {
+	（中略）
+}
+</pre>
+</p>
+</ul>
+<p>
+次節では、残りの関数の実装と置換表の効果の検証を行います。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="8_5.html">＜前へ＞</a>
+<a href="8_7.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

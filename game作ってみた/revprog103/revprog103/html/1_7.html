@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_6.html">＜前へ＞</a>
+<a href="2_1.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.7 盤面の操作と表示</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+それではBoardを使用して盤面の操作と表示を行ってみましょう。<br>
+この処理はmain.cに記述してあります。<br>
+ここでは処理の概要について説明します。<br>
+</p>
+<ul>
+<li><b>開始処理、終了処理</b>
+<p>
+main()では、まず必要なパラメータの初期化を行います。<br>
+今回初期化が必要なのはBoard構造体だけです。<br>
+main()を終了するときには、必要なくなったメモリの解放を行っています。<br>
+</p>
+<li><b>盤面の表示</b>
+<p>
+print_board()では盤面の表示を行っています。<br>
+Board_Disk()を使用して各マスの状態を取得して対応する文字列を出力しています。<br>
+</p>
+<li><b>盤面の操作</b>
+<p>
+盤面の操作を行っているのがplay()です。<br>
+手番毎に以下の処理を行っています。<br>
+</p>
+<p>
+<ul>
+<li>盤面の表示を行う
+<li>手番の表示を行う
+<li>入力の受付を行う
+<li>入力を解析し、対応する処理を行う
+</ul>
+</p>
+<li><b>操作方法</b>
+<p>
+操作方法を説明しておきます。<br>
+本章以降でも盤面の操作方法はほとんど同じです。<br>
+盤面と手番が表示されたら、以下のコマンドを入力してください。<br>
+</p>
+<ul>
+<li><b>"q"または"quit"</b>
+<p>
+盤面操作を終了します。<br>
+</p>
+<li><b>"u"または"undo"</b>
+<p>
+１手戻します。<br>
+盤面が初期状態のときには何もしません。<br>
+</p>
+<li><b>"p"または"pass"</b>
+<p>
+パスします。<br>
+パスできない局面ではこのコマンドは無効になります。<br>
+</p>
+<li><b>座標</b>
+<p>
+"F5"や"e6"等の盤面の座標を入力してください。<br>
+アルファベットは大文字でも小文字でもかまいません。<br>
+着手できない場合には何もしません。<br>
+</p>
+</ul>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_6.html">＜前へ＞</a>
+<a href="2_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

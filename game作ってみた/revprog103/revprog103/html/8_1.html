@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="7_4.html">＜前へ＞</a>
+<a href="8_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>8.1 置換表の関数定義</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章では置換表について説明します。<br>
+置換表とは、探索中に出現した局面とその情報（例えば評価値）を登録しておく表をいいます。<br>
+局面の登録を行っておくと、次に同じ局面が出現したときに登録情報を使うことができるので探索量を減らすことができます。
+</p>
+<p>
+最初に置換表クラスHashの関数定義を行います。<br>
+"hash.h"に定義してあります。<br>
+</p>
+<ul>
+<li><b>Hash *Hash_New(int in_size)</b>
+<p>
+置換表クラスの生成を行います。<br>
+in_sizeには置換表に登録できる局面数をbit数で指定します。<br>
+例えばin_size = 20なら(2の20乗)=1048576局面を登録することができます。<br>
+引数 置換表に登録できる局面数（bit数）<br>
+戻り値 生成した置換表クラスへのポインタ<br>
+</p>
+<li><b>void Hash_Delete(Hash *self)</b>
+<p>
+置換表クラスの破棄を行います。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+戻り値 なし
+</p>
+<li><b>void Hash_Clear(Hash *self)</b>
+<p>
+置換表に登録されている局面を全て削除します。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+戻り値 なし
+</p>
+<li><b>int Hash_Set(Hash *self, const HashKey *in_key, const HashInfo *in_info)</b>
+<p>
+置換表に局面を登録します。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+&nbsp;in_key : 局面のハッシュ値へのポインタ<br>
+&nbsp;in_info : 局面情報へのポインタ<br>
+戻り値 登録に成功したら1、失敗したら0<br>
+</p>
+<li><b>int Hash_Get(Hash *self, const HashKey *in_key, HashInfo *out_info)</b>
+<p>
+局面を指定して、登録情報を取得します。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+&nbsp;in_key : 局面のハッシュ値へのポインタ<br>
+&nbsp;in_info : 局面情報へのポインタ<br>
+戻り値 局面情報が登録されていれば1、登録されていなければ0<br>
+</p>
+<p>
+局面のハッシュ値とは、局面を識別するための値です。<br>
+以下の構造体になっており、局面から計算された64bitのデータを含みます。<br>
+具体的な生成方法については次節で説明します。<br>
+</p>
+<p>
+<pre>
+/* ハッシュ値 */
+struct _HashValue
+{
+	unsigned long Low;		/* 下32bit */
+	unsigned long High;		/* 上32bit */
+};
+typedef struct _HashValue HashValue;
+</pre>
+</p>
+<p>
+局面情報は以下のようになっています。<br>
+その局面の評価値がどの範囲にあるのか、前回の探索を何手で行ったか、前回の探索で得られた最善手は何か、を記録できます。<br>
+</p>
+<p>
+<pre>
+/* 局面情報 */
+struct _HashInfo
+{
+	int Lower;				/* 評価値の下限 */
+	int Upper;				/* 評価値の上限 */
+	unsigned char Depth;	/* 探索手数 */
+	unsigned char Move;		/* 最善手 */
+};
+typedef struct _HashInfo HashInfo;
+</pre>
+</p>
+<li><b>void Hash_ClearInfo(Hash *self)</b>
+<p>
+置換表から局面情報を取得しようとした回数と、取得に成功した回数を初期化します。<br>
+取得に成功した回数が多いほど置換表が有効に使われていると判断できます。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>int Hash_CountGet(Hash *self)</b>
+<p>
+置換表から局面情報を取得しようとした回数（Hash_Get()が呼ばれた回数）を取得します。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+戻り値 Hash_Get()が呼ばれた回数<br>
+</p>
+<li><b>int Hash_CountHit(Hash *self)</b>
+<p>
+置換表から局面情報を取得できた回数（Hash_Get()が1を返した回数）を取得します。<br>
+引数<br>
+&nbsp;self : Hashクラスへのポインタ<br>
+戻り値 Hash_Get()が1を返した回数<br>
+</p>
+</ul>
+<p>
+置換表で利用するハッシュ法という手法について説明します。<br>
+</p>
+<a href="../index.html">＜目次＞</a>
+<a href="7_4.html">＜前へ＞</a>
+<a href="8_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

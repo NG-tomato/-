@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_4.html">＜前へ＞</a>
+<a href="1_6.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.5 盤面をコピー、反転させる処理</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では盤面をコピーする処理と、盤面を反転させる処理について説明します。<br>
+盤面のコピーは、同じ内容をもつ複数の盤面を用意したい場合に使います。<br>
+盤面を反転させる処理は、例えば盤面の評価を黒番のときだけに行いたい場合に使います。<br>
+</p>
+<ul>
+<li><b>盤面をコピーする処理</b><br>
+<p>
+<pre>
+void Board_Copy(const Board *self, Board *out_board)
+{
+	*out_board = *self;
+	out_board->Sp = self->Sp - self->Stack + out_board->Stack;
+}
+</pre>
+</p>
+<p>
+最初に構造体の内容をコピーします。<br>
+ただしSpはポインタなので、そのまま値をコピーしても意味がありません。<br>
+コピー先のSpがコピー先のStackの内部を指すようにするのが２行目の処理です。<br>
+</p>
+<li><b>盤面を反転する処理</b>
+<p>
+<pre>
+void Board_Reverse(Board *self)
+{
+	int pos;
+	int *p;
+	int n;
+
+	for (pos = 0; pos < NUM_DISK; pos++) {
+		if (self->Disk[pos] == BLACK) {
+			self->Disk[pos] = WHITE;
+		} else if (self->Disk[pos] == WHITE) {
+			self->Disk[pos] = BLACK;
+		}
+	}
+	for (p = self->Sp; p > self->Stack;) {
+		p--;
+		n = *p;
+		p--;
+		*p = OPPONENT_COLOR(*p);
+		p -= n + 1;
+	}
+}
+</pre>
+</p>
+<p>
+まず各マスについて、そのマスに黒石があれば白石に、白石があれば黒石にしています。<br>
+次の処理はちょっとわかりにくいですが、Stackを調べて色を格納しているところだけ反転しています。<br>
+</p>
+<p>
+盤面処理の説明も終わりに近づいてきました。<br>
+次節では残りの関数について説明します。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_4.html">＜前へ＞</a>
+<a href="1_6.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

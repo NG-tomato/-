@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="6_2.html">＜前へ＞</a>
+<a href="6_4.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>6.3 定石データの読み書き</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では定石データファイルを読み書きする関数の説明をします。<br>
+定石データは膨大になることがあるため、ファイルに保存しておくと管理しやすくなります。<br>
+また定石データだけをファイルにしておけば、他の人が作成した定石データを使うことができて便利です。
+</p>
+<ul>
+<li><b>ファイルフォーマット</b>
+<p>
+まず最初に定石データファイルのフォーマットについて説明します。<br>
+ファイルフォーマットは以下の通りです。<br>
+最初にデータの個数が書き込まれており、次にデータの個数分だけ局面データが書き込まれています。<br>
+</p>
+<p>
+<table border="1" cellpadding="4">
+<tr><th>名前</th><th>意味</th><th>型</th><th>個数</th></tr>
+<tr align="right"><td>Num</td><td>データの個数</td><td>int</td><td>1</td></tr>
+<tr align="right"><td>Data</td><td>局面データ</td><td>PositionData</td><td>Num</td></tr>
+</table>
+</p>
+<li><b>定石データの読み込み</b>
+<p>
+定石データを読み込む関数Opening_Load()は以下のようになっています。<br>
+</p>
+<p>
+<pre>
+static int Opening_Read(Opening *self, FILE *fp)
+{
+	PositionData *data = NULL;
+
+	if (fread(&amp;self->Num, sizeof(int), 1, fp) < 1) {
+		return 0;
+	}
+	if (self->Num % NUM_INFO_BLOCK == 0) {
+		self->Max = (self->Num / NUM_INFO_BLOCK + 1) * NUM_INFO_BLOCK;
+	} else {
+		self->Max = (self->Num / NUM_INFO_BLOCK + 2) * NUM_INFO_BLOCK;
+	}
+	data = realloc(self->Data, self->Max * sizeof(PositionData));
+	if (!data) {
+		return 0;
+	}
+	self->Data = data;
+	if (fread(self->Data, sizeof(PositionData), self->Num, fp) < (size_t)self->Num) {
+		return 0;
+	}
+	return 1;
+}
+
+int Opening_Load(Opening *self, const char *in_file_name)
+{
+	FILE *fp;
+
+	fp = fopen(in_file_name, "rb");
+	if (!fp) {
+		return 0;
+	}
+	if (!Opening_Read(self, fp)) {
+		fclose(fp);
+		return 0;
+	}
+	fclose(fp);
+	return 1;
+}
+</pre>
+</p>
+<p>
+渡されたファイル名のファイルを開き、局面データの個数を読み込みます。<br>
+次に局面データの分だけメモリ領域を確保します。<br>
+ただし、最低NUM_INFO_BLOCK個の空きデータが存在するように領域を確保します。<br>
+最後に局面データを読み込みファイルを閉じます。<br>
+</p>
+<li><b>定石データの書き込み</b>
+<p>
+定石データを書き込む関数Opening_Write()は以下の通りです。<br>
+ファイルを開いて局面データの数と、局面データを書き込んでいるだけです。<br>
+</p>
+<p>
+<pre>
+static int Opening_Write(const Opening *self, FILE *fp)
+{
+	if (fwrite(&amp;self->Num, sizeof(int), 1, fp) < 1) {
+		return 0;
+	}
+	if (fwrite(self->Data, sizeof(PositionData), self->Num, fp) < (size_t)self->Num) {
+		return 0;
+	}
+	return 1;
+}
+
+int Opening_Save(const Opening *self, const char *in_file_name)
+{
+	FILE *fp;
+
+	fp = fopen(in_file_name, "wb");
+	if (!fp) {
+		return 0;
+	}
+	if (!Opening_Write(self, fp)) {
+		fclose(fp);
+		return 0;
+	}
+	fclose(fp);
+	return 1;
+}
+</pre>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="6_2.html">＜前へ＞</a>
+<a href="6_4.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_7.html">＜前へ＞</a>
+<a href="2_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>2.1 コンピュータ思考の関数定義</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章では、コンピュータに手を選ばせる関数を作成します。<br>
+この関数は"com.h"に記述してあります。<br>
+盤面操作の場合と同じく、コンピュータに思考させるためにはあらかじめComクラスを生成しておく必要があります。<br>
+以下では探索、ノード数といった用語が登場しますが、これらについては次節以降で説明します。<br>
+</p>
+<ul>
+<li><b>Com *Com_New(void)</b>
+<p>
+コンピュータ思考クラスの生成を行います。<br>
+引数 なし<br>
+戻り値 生成したComクラス<br>
+</p>
+<li><b>void Com_Delete(Com *self)</b>
+<p>
+コンピュータ思考クラスの破棄を行います。<br>
+引数<br>
+&nbsp;self : Comクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>void Com_SetLevel(Com *self, int in_mid, int in_exact, int in_wld)</b>
+<p>
+コンピュータの強さを設定します。<br>
+完全読みでは、終局まで先を読んで最善手を選びます。<br>
+必勝読みでは、終局まで先を読んで勝てる手を見つけたら思考を打ち切りその手を打ちます。<br>
+引数<br>
+&nbsp;self : Comクラスへのポインタ<br>
+&nbsp;in_mid : 中盤での先読みの手数<br>
+&nbsp;in_exact : 完全読みをする空きマスの数<br>
+&nbsp;in_wld : 必勝読みをする空きマスの数<br>
+戻り値 なし
+</p>
+<li><b>int Com_NextMove(Com *self, const Board *in_board, int in_color, int *out_value)</b>
+<p>
+与えられた局面から次の手を選択します。<br>
+引数<br>
+&nbsp;self : Comクラスへのポインタ<br>
+&nbsp;in_board : 思考を行う局面<br>
+&nbsp;in_color : 思考を行う手番<br>
+&nbsp;out_value : 関数終了時に評価値を格納するint型変数へのポインタ<br>
+戻り値 選択された手<br>
+</p>
+<li><b>int Com_CountNodes(const Com *self)</b>
+<p>
+直前に呼び出したCom_NextMove()で探索を行ったノード数を返します。<br>
+引数<br>
+&nbsp;self : Comクラスへのポインタ<br>
+戻り値 探索を行ったノード数<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_7.html">＜前へ＞</a>
+<a href="2_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

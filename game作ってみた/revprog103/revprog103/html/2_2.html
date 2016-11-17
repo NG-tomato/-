@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="2_1.html">＜前へ＞</a>
+<a href="2_3.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>2.2 各関数の実装</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では、前節説明した関数の実装を行います。<br>
+といっても、メインとなる思考の部分はまだ実装しません。<br>
+思考のアルゴリズムを説明してから実装を行います。<br>
+それぞれの関数は"com.c"に記述されています。
+</p>
+<ul>
+<li><b>Com構造体</b>
+<p>
+まずComクラスの構造について見てみましょう。
+</p>
+<p>
+<pre>
+struct _Com
+{
+	Board *Board;
+	int MidDepth;
+	int WLDDepth;
+	int ExactDepth;
+	int Node;
+};
+</pre>
+</p>
+<p>
+Boardは、後述する探索に使用する盤面です。<br>
+MidDepthは中盤での先読み手数、WLDDepthは必勝読みでの先読み手数、ExactDepthは完全読みでの先読み手数です。<br>
+Nodeは探索したノードの数を保存しておくための変数です。<br>
+</p>
+<li><b>Comクラスの生成</b>
+<p>
+それではComクラスの生成処理を見てみましょう。
+</p>
+<p>
+<pre>
+static int Com_Initialize(Com *self)
+{
+	memset(self, 0, sizeof(Com));
+	self->Board = Board_New();
+	if (!self->Board) {
+		return 0;
+	}
+	self->MidDepth = 1;
+	self->WLDDepth = 1;
+	self->ExactDepth = 1;
+	self->Node = 0;
+	return 1;
+}
+
+Com *Com_New(void)
+{
+	Com *self;
+	self = malloc(sizeof(Com));
+	if (self) {
+		if (!Com_Initialize(self)) {
+			Com_Delete(self);
+			self = NULL;
+		}
+	}
+	return self;
+}
+</pre>
+<p>
+malloc()で領域を確保し、メンバを初期化しているだけです。<br>
+初期化に失敗したら後述するCom_Delete()を呼び出すようになっています。<br>
+</p>
+<li><b>Comクラスの破棄</b>
+<p>
+次にComクラスの破棄関数です。
+</p>
+<p>
+<pre>
+void Com_Delete(Com *self)
+{
+	if (self->Board) {
+		Board_Delete(self->Board);
+	}
+	free(self);
+}
+</pre>
+</p>
+<p>
+Boardを破棄して、Com_New()で確保した領域を解放しているだけです。<br>
+</p>
+<li><b>強さ設定</b>
+<p>
+強さを設定する関数Com_SetLevel()の実装は以下のようになっています。<br>
+メンバ変数に引数を代入するだけです。<br>
+</p>
+<p>
+<pre>
+void Com_SetLevel(Com *self, int in_mid, int in_exact, int in_wld)
+{
+	self->MidDepth = in_mid;
+	self->WLDDepth = in_wld;
+	self->ExactDepth = in_exact;
+}
+</pre>
+</p>
+<li><b>ノード数取得</b>
+<p>
+思考中に探索したノード数を返す関数Com_CountNodes()は以下のようになっています。<br>
+メンバ変数のNodeに格納されている値を返しているだけです。<br>
+Nodeの値は後述するCom_NextMove()の実行中に格納されます。<br>
+</p>
+<p>
+<pre>
+int Com_CountNodes(const Com *self)
+{
+	return self->Node;
+}
+</pre>
+</p>
+<li><b>思考を行う処理</b>
+<p>
+Comクラスの関数のうち、最も複雑な処理をするのがCom_NextMove()です。<br>
+本節では途中まで説明します。<br>
+</p>
+<p>
+<pre>
+int Com_NextMove(Com *self, const Board *in_board, int in_color, int *out_value)
+{
+	int result;
+	int left;
+	int value;
+	int color;
+
+	Board_Copy(in_board, self->Board);
+	self->Node = 0;
+	left = Board_CountDisks(self->Board, EMPTY);
+	if (left <= self->ExactDepth) {
+		value = Com_EndSearch(self, left, in_color, Board_OpponentColor(in_color), 0, &amp;result);
+	} else if (left <= self->WLDDepth) {
+		value = Com_EndSearch(self, left, in_color, Board_OpponentColor(in_color), 0, &amp;result);
+	} else {
+		if ((in_color == WHITE &amp;&amp; self->MidDepth % 2 == 0) ||
+			(in_color == BLACK &amp;&amp; self->MidDepth % 2 == 1)) {
+			Board_Reverse(self->Board);
+			color = Board_OpponentColor(in_color);
+		} else {
+			color = in_color;
+		}
+		value = Com_MidSearch(self, self->MidDepth, color, Board_OpponentColor(color), 0, &amp;result);
+	}
+	if (out_value) {
+		*out_value = value;
+	}
+
+	return result;
+}
+</pre>
+</p>
+<p>
+まず引数として渡されたBoardを、Comクラスで保持しているBoardにコピーします。<br>
+次に渡された局面の空きマスの個数によって処理を分けています。<br>
+</p>
+<p>
+完全読みを行える空きマス個数であれば完全読み、必勝読みを行える空きマス個数であれば必勝読みを行います。<br>
+Com_EndSearch()という関数が、完全読みまたは必勝読みを行う関数です。<br>
+上の例では完全読みと必勝読みで同じ処理になっていますが、節が進むと別の処理を行うようになります。<br>
+</p>
+<p>
+完全読みも必勝読みも行えない場合にはCom_MidSearch()を呼び出します。<br>
+Com_MidSearch()を呼び出す前に局面を反転させることがありますが、これは常に黒番の局面で評価を行うためです。<br>
+局面評価は「どちらの手番か」という情報が重要になることがあるため、評価を行う手番を固定にしておくと評価値の精度が高くなることが期待できます。<br>
+<p>
+Com_EndSearch()またはCom_MidSearch()を呼び出したら、out_valueに評価値を格納して関数を終了します。<br>
+Com_EndSearch()とCom_MidSearch()の内部については後の節で触れます。<br>
+</p>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="2_1.html">＜前へ＞</a>
+<a href="2_3.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

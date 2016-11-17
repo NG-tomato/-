@@ -1,0 +1,203 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="3_3.html">＜前へ＞</a>
+<a href="3_5.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>3.4 評価クラスの生成とファイルの読み書き</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節ではEvaluatorクラスの生成、破棄と評価パラメータファイルの読み書きについて説明します<br>
+</p>
+<ul>
+<li><b>Evaluatorクラスの生成</b>
+<p>
+EvaluatorクラスはEvaluator_New()で生成します。<br>
+</p>
+<p>
+<pre>
+Evaluator *Evaluator_New(void)
+{
+	Evaluator *self;
+
+	self = malloc(sizeof(Evaluator));
+	if (self) {
+		if (!Evaluator_Initialize(self)) {
+			Evaluator_Delete(self);
+			self = NULL;
+		}
+	}
+	return self;
+}
+</pre>
+</p>
+<p>
+これまで説明したクラスと同様に領域を確保し、初期化関数を呼び出しています。<br>
+次に初期化関数Evaluator_Initialize()について見てみましょう。<br>
+</p>
+<p>
+<pre>
+static int Evaluator_Initialize(Evaluator *self)
+{
+	int i, j;
+	int mirror_in, mirror_out, coeff;
+	int mirror_corner_coeff[] = { POW_3_2, POW_3_5, POW_3_0, POW_3_3, POW_3_6, POW_3_1, POW_3_4, POW_3_7 };
+
+	memset(self, 0, sizeof(Evaluator));
+	for (i = 0; i < PATTERN_ID_NUM; i++) {
+		self->Value[i] = calloc(PatternSize[i], sizeof(int));
+		if (!self->Value[i]) {
+			return 0;
+		}
+	}
+	for (i = 0; i < POW_3_8; i++) {
+		mirror_in = i;
+		mirror_out = 0;
+		coeff = POW_3_7;
+		for (j = 0; j < 8; j++) {
+			mirror_out += mirror_in % 3 * coeff;
+			mirror_in /= 3;
+			coeff /= 3;
+		}
+		if (mirror_out < i) {
+			self->MirrorLine[i] = mirror_out;
+		} else {
+			self->MirrorLine[i] = i;
+		}
+	}
+	for (i = 0; i < POW_3_8; i++) {
+		mirror_in = i;
+		mirror_out = 0;
+		for (j = 0; j < 8; j++) {
+			mirror_out += mirror_in % 3 * mirror_corner_coeff[j];
+			mirror_in /= 3;
+		}
+		if (mirror_out < i) {
+			self->MirrorCorner[i] = mirror_out;
+		} else {
+			self->MirrorCorner[i] = i;
+		}
+	}
+
+	return 1;
+}
+</pre>
+</p>
+<p>
+この関数では３つの処理を行っています。<br>
+最初に各パターンの評価値を格納するための領域を確保しています。<br>
+確保した領域が0で初期化されるようにcallocを使用しています。<br>
+次にMirror_Lineの初期化を行っています。<br>
+最後にMirror_Cornerの初期化を行っています。<br>
+</p>
+<p>
+Mirror_Lineは８マスを１列に並べたパターンに対して、反転したパターンのインデックスを調べるための変数です。<br>
+反転したパターンのインデックスが自分のインデックスより小さい場合には、反転したパターンのインデックスを返します。<br>
+反転したパターンのインデックスが自分のインデックスと同じか大きい場合には、自分のインデックスを返します。<br>
+Mirro_Cornerは隅の８マスのパターンに対して、反転したパターンのインデックスを調べます。<br>
+</p>
+<li><b>Evaluatorクラスの破棄</b>
+<p>
+次にEvaluatorクラスの破棄です。<br>
+生成時に確保した領域を解放しているだけです。<br>
+</p>
+<p>
+<pre>
+static void Evaluator_Finalize(Evaluator *self)
+{
+	int i;
+	for (i = 0; i < PATTERN_ID_NUM; i++) {
+		if (self->Value[i]) {
+			free(self->Value[i]);
+		}
+	}
+}
+
+void Evaluator_Delete(Evaluator *self)
+{
+	Evaluator_Finalize(self);
+	free(self);
+}
+</pre>
+</p>
+<li><b>評価パラメータの読み込み</b>
+<p>
+次にファイルから評価パラメータを読み込む関数です。<br>
+特に難しいことはせず<br>
+<ul>
+<li>ファイルを開く
+<li>ファイルからデータを読み込んでValueに格納
+<li>ファイルを閉じる
+</ul>
+という３つの処理を行っているだけです。<br>
+</p>
+<p>
+<pre>
+int Evaluator_Load(Evaluator *self, const char *in_file_name)
+{
+	FILE *fp;
+	int i;
+
+	fp = fopen(in_file_name, "rb");
+	if (!fp) {
+		return 0;
+	}
+	for (i = 0; i < PATTERN_ID_NUM; i++) {
+		if (fread(self->Value[i], sizeof(int), PatternSize[i], fp) < (size_t)PatternSize[i]) {
+			fclose(fp);
+			return 0;
+		}
+	}
+	fclose(fp);
+	return 1;
+}
+</pre>
+</p>
+<li><b>評価パラメータの書き込み</b>
+<p>
+最後にファイルに評価パラメータを書き込む関数です。<br>
+Evaluator_Load()の読み込む処理が書き込む処理に変わっているだけです。<br>
+</p>
+<p>
+<pre>
+int Evaluator_Save(const Evaluator *self, const char *in_file_name)
+{
+	FILE *fp;
+	int i;
+
+	fp = fopen(in_file_name, "wb");
+	if (!fp) {
+		return 0;
+	}
+	for (i = 0; i < PATTERN_ID_NUM; i++) {
+		if (fwrite(self->Value[i], sizeof(int), PatternSize[i], fp) < (size_t)PatternSize[i]) {
+			fclose(fp);
+			return 0;
+		}
+	}
+	fclose(fp);
+	return 1;
+}
+</pre>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="3_3.html">＜前へ＞</a>
+<a href="3_5.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

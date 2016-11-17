@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="0_3.html">＜前へ＞</a>
+<a href="1_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.1 定数と関数の定義</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章ではリバーシ盤面の処理について説明します。<br>
+まず本節で定数と関数の概要を説明し、具体的な処理については次節以降で説明します。<br>
+本節では定数と関数の一覧を載せているだけなので軽く読む程度にしてください。<br>
+</p>
+<p>
+まずはじめに盤面処理で使用する定数を列挙します。<br>
+使用頻度の高い値を定数として定義しておくことで、実装が行いやすくなります。
+</p>
+<ul>
+<li><b>盤面の大きさ</b>
+<p>
+盤面の大きさ（１辺のマスの数）を以下で定義します。<br>
+この値を使用することで、盤面の大きさに変更が生じてもソースコードの修正が少なくて済むようにします。<br>
+<pre>
+/* 盤面の大きさ */
+#define BOARD_SIZE 8
+</pre>
+</p>
+<li><b>マスの状態</b>
+<p>
+あるマスにどの石が置かれているのか表す定数を定義します。<br>
+また盤外を表す定数"WALL"も定義しておきます。
+</p>
+<pre>
+/* マスの状態 */
+#define WALL  -1
+#define EMPTY 0
+#define BLACK 1
+#define WHITE 2
+</pre>
+<li><b>マスの位置または手の種類</b>
+<p>
+マスの位置または手の種類を表す定数を定義しておきます。<br>
+なぜマスの位置がこの値になるのかについては、盤面の実装に関係するのでそのときに説明します。<br>
+また以下の定数は8x8の盤面でしか使用できないので、盤面の大きさを変更したら修正する必要があります。
+<pre>
+#define PASS -1
+#define NOMOVE -2
+
+#define A1 10
+#define B1 11
+(中略)
+#define G8 79
+#define H8 80
+</pre>
+</p>
+</ul>
+<p>
+次に関数の説明を行います。<br>
+以下の関数があればリバーシの対局を行うのに特に支障はないと思います。
+</p>
+<p>
+説明の前にいくつか注意点を挙げておきます。<br>
+</p>
+<p>
+盤面の操作にはあらかじめBoardクラスを生成する必要があります。<br>
+そして生成したBoardクラスが必要なくなったら、Boardクラスを破棄してください。<br>
+具体的な方法についてはmain.cを参考にしてください。<br>
+</p>
+<p>
+またルールに従った盤面操作を行うためには、呼び出し側で手番の管理を行う必要があります。<br>
+手番の管理をうまく行わないと、例えば黒番で連続２回着手するといったことが可能になってしまいます。<br>
+</p>
+<ul>
+<li><b>Board *Board_New(void);</b><br>
+<p>
+盤面クラスの生成を行います<br>
+引数 なし<br>
+戻り値 生成した盤面クラス。生成に失敗したらNULLを返します<br>
+</p>
+<li><b>void Board_Delete(Board *self);</b><br>
+<p>
+盤面クラスの破棄を行います<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>void Board_Clear(Board *self);</b><br>
+<p>
+盤面の初期化を行います<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>int Board_Disk(const Board *self, int in_pos);</b><br>
+<p>
+指定されたマスの状態を返します<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_pos : 状態を取得するマスの位置<br>
+戻り値 指定されたマスの状態<br>
+</p>
+<li><b>int Board_CountDisks(const Board *self, int in_color);</b><br>
+<p>
+指定された状態のマスの数を返します<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_color : 数を取得するマスの状態<br>
+戻り値 指定された状態のマスの数<br>
+</p>
+<li><b>int Board_Flip(Board *self, int in_color, int in_pos);</b><br>
+<p>
+指定された色、位置で着手を行います<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_color : 着手する石の色<br>
+&nbsp;in_pos : 着手するマスの位置<br>
+戻り値 着手できた場合には返した石の数（着手したマスの石は数に含まない）。着手できない場合には0<br>
+</p>
+<li><b>int Board_Unflip(Board *self);</b><br>
+<p>
+１手戻します<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+戻り値 直前の手によって返した石の数（着手したマスの石は数に含まない）。盤面が初期状態の場合には0を返す<br>
+</p>
+<li><b>int Board_CountFlips(const Board *self, int in_color, int in_pos);</b><br>
+<p>
+指定した色、マスに着手した場合に何石返すかを調べます<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_color : 着手する石の色<br>
+&nbsp;in_pos : 着手するマスの位置<br>
+戻り値 着手できる場合には返す石の数（着手するマスの石は数に含まない）。着手できない場合には0<br>
+</p>
+<li><b>int Board_CanFlip(const Board *self, int in_color, int in_pos);</b><br>
+<p>
+指定した色、マスに着手できるかどうかを調べます<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_color : 着手する石の色<br>
+&nbsp;in_pos : 着手するマスの位置<br>
+戻り値 着手できるなら1、できないなら0<br>
+</p>
+<li><b>void Board_Copy(const Board *self, Board *out_board);</b><br>
+<p>
+盤面のコピーを行います<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;out_board : コピー先のBoardクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>void Board_Reverse(Board *self);</b><br>
+<p>
+盤面の反転を行います。<br>
+各マスの黒石を白石に、白石を黒石に変更します<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>int Board_CanPlay(const Board *self, int in_color);</b><br>
+<p>
+指定した色で着手可能かどうかを調べます<br>
+引数<br>
+&nbsp;self : Boardクラスへのポインタ<br>
+&nbsp;in_color : 着手を行う色<br>
+戻り値 指定された色でどこかのマスに着手可能なら1、可能でなければ0<br>
+</p>
+<li><b>int Board_Pos(int in_x,int in_y);</b><br>
+<p>
+マスの位置を返す<br>
+引数<br>
+&nbsp;in_x : マスのX座標<br>
+&nbsp;in_y : マスのY座標<br>
+戻り値 指定されたマスの位置<br>
+</p>
+<li><b>int Board_X(int in_pos);</b><br>
+<p>
+マスのX座標を返す<br>
+引数<br>
+&nbsp;in_pos : マスの位置<br>
+戻り値 マスのX座標<br>
+</p>
+<li><b>int Board_Y(int in_pos);</b><br>
+<p>
+マスのY座標を返す<br>
+引数<br>
+&nbsp;in_pos : マスの位置<br>
+戻り値 マスのY座標<br>
+</p>
+<li><b>int Board_OpponentColor(int in_color);</b><br>
+<p>
+指定された色の逆の色を返す<br>
+引数<br>
+&nbsp;in_color : BLACKまたはWHITE<br>
+戻り値 in_colorがBLACKならWHITE、WHITEならBLACK<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="0_3.html">＜前へ＞</a>
+<a href="1_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="1_1.html">＜前へ＞</a>
+<a href="1_3.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>1.2 盤面の生成、初期化</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本節では盤面の生成と初期化処理について説明します。<br>
+生成とは、盤面処理に必要なパラメータ用のメモリ確保と初期化のことです。<br>
+初期化処理は、盤面をゲームの最初の状態にすることを意味します。<br>
+</p>
+<ul>
+<li><b>Board構造体</b><br>
+<p>
+処理について説明する前に、まず盤面クラスBoardの構造について見てみましょう。<br>
+<pre>
+#define NUM_DISK	((BOARD_SIZE+1)*(BOARD_SIZE+2)+1)
+#define NUM_STACK	(((BOARD_SIZE-2)*3+3)*BOARD_SIZE*BOARD_SIZE)
+
+(中略)
+
+struct _Board
+{
+	int Disk[NUM_DISK];
+	int Stack[NUM_STACK];
+	int *Sp;
+};
+</pre>
+Diskは、マスの状態を表す変数です。<br>
+8x8盤の場合には91個の配列です。<br>
+64個でないのは、「盤外」という状態を作ることで着手処理を行いやすくするためです。<br>
+この配列を使った場合の盤面イメージは以下のようになります。<br>
+<pre>
+# : WALL
+. : EMPTY
+O : BLACK
+X : WHITE
+
+#########
+#........
+#........
+#........
+#...XO...
+#...OX...
+#........
+#........
+#........
+##########
+</pre>
+ただし、１行目の右端と２行目の左端、２行目の右端と３行目の左端、、、９行目の右端と１０行目の左端はそれぞれつながっています。<br>
+</p>
+<p>
+Stackは、返した石を覚えておくためのものです。<br>
+石を返すときには以下の情報をこの順番に格納していきます。<br>
+</p>
+<p>
+返した石の位置１<br>
+返した石の位置２<br>
+...<br>
+返した石の位置ｎ<br>
+着手位置<br>
+相手の色<br>
+返した石の数<br>
+</p>
+<p>
+逆に１手戻すときには、この情報を逆から読み込んでいきます。<br>
+相手の色を格納しておくのは、１手戻すときには返した石が相手の色になるからです。<br>
+SpはStackのどの位置にいるかを覚えておくためのものです。<br>
+Stackに値を書き込む毎に後ろに下がり、値を読み込む毎に前に移動します。<br>
+</p>
+<li><b>盤面の生成</b><br>
+<p>
+それでは盤面の生成処理を見ましょう。<br>
+board.cには以下のように記述されています。<br>
+<pre>
+Board *Board_New(void)
+{
+	Board *self;
+
+	self = malloc(sizeof(Board));
+	if (self) {
+		Board_Clear(self);
+	}
+	return self;
+}
+</pre>
+たいした処理は行っていません。<br>
+malloc()でBoard構造体用の領域を確保して、領域確保に成功したら盤面初期化処理を呼び出しているだけです。<br>
+</p>
+<li><b>盤面の破棄</b><br>
+<p>
+それでは、盤面が必要なくなったときの処理はどうなるでしょうか。<br>
+<pre>
+void Board_Delete(Board *self)
+{
+	free(self);
+}
+</pre>
+こちらもたいしたことはありません。<br>
+Board_New()で確保した領域を解放しているだけです。<br>
+</p>
+<li><b>盤面の初期化</b><br>
+<p>
+この節の最後は盤面の初期化処理です。
+<pre>
+void Board_Clear(Board *self)
+{
+	int i, j;
+
+	for (i = 0; i < NUM_DISK; i++) {
+		self->Disk[i] = WALL;
+	}
+	for (i = 0; i < BOARD_SIZE; i++) {
+		for (j = 0; j < BOARD_SIZE; j++) {
+			self->Disk[Board_Pos(i, j)] = EMPTY;
+		}
+	}
+	self->Disk[E4] = BLACK;
+	self->Disk[D5] = BLACK;
+	self->Disk[D4] = WHITE;
+	self->Disk[E5] = WHITE;
+
+	self->Sp = self->Stack;
+}
+</pre>
+最初に配列DiskをWALLで埋めています。<br>
+次に8x8領域をEMPTYで埋め、BLACKとWHITEを初期配置通りに並べています。<br>
+最後にSpを配列Stackの最初に移動しています。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="1_1.html">＜前へ＞</a>
+<a href="1_3.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

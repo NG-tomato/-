@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="2_3.html">＜前へ＞</a>
+<a href="2_5.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>2.4 MinMax法とNegaMax法 </b>
+</font>
+</td>
+</tr>
+</table>
+<ul>
+<li><b>MinMax法</b><br>
+<p>
+局面を展開して得られたゲーム木から、どのようにして手を選択すればよいでしょうか。<br>
+</p>
+<p>
+前節では３手先を読んだ場合のゲーム木を作りました。<br>
+このゲーム木について考える前に、まず１手だけ先を読んだ場合を考えてみましょう。<br>
+答えは単純で、最も評価値の高い手を選べばよいのです。<br>
+</p>
+<p>
+何手先を読む場合も、基本的な考え方は同じで、各ノードについて以下の処理を行います。<br>
+<ol>
+<li>ノードが自分の手番のときには、子ノードの中から最大の評価値のノードを選ぶ<br>
+ノードの評価値は、選択した子ノードの評価値にする<br>
+<li>ノードが相手の手番のときには、子ノードの中から最小の評価値のノードを選ぶ<br>
+ノードの評価値は、選択した子ノードの評価値にする<br>
+</ol>
+</p>
+<p>
+このアルゴリズムを<b>MinMax法（ミニマックス法）</b>と呼びます。<br>
+前節で作成したゲーム木からMinMax法を使って手を選んだのが下の図です。<br>
+赤または青く塗られたブランチが、選択した手を表しています。<br>
+</p>
+<p>
+<img src="../img/minmax.gif" width="600" height="336" alt="MiniMax法による探索"><br>
+MinMax法による探索
+</p>
+<li><b>NegaMax法</b>
+<p>
+MinMax法では、自分の手番か相手の手番かによって、最大化をするか最小化をするかが異なります。<br>
+これをどちらの手番でも最大化するようにしたものが<b>NegaMax法（ネガマックス法）</b>です。<br>
+どのノードでも最大化処理となるので、関数の実装が少し単純になります。<br>
+</p>
+<p>
+NegaMax法では、リーフの評価値はそのノードの手番での値になります。<br>
+つまり、自分の手番なら自分にとっての評価値、相手の手番なら相手にとっての評価値になります。<br>
+次に、各ノードでそのノードにとって最大の評価値の子ノードを選びます。<br>
+そのノードにとって最大なので、評価値が最小となる子ノードを選ぶことになります。<br>
+ノードの評価値は、選択した子ノードの評価値に-1を掛けた値にします。<br>
+</p>
+<p>
+<img src="../img/negamax.gif" width="600" height="336" alt="NegaMax法による探索"><br>
+NegaMax法による探索
+</p>
+<li><b>関数の実装</b>
+<p>
+</p>
+それではNegaMax法の実装をしましょう。<br>
+Com_EndSearch()は以下のようになっています。<br>
+<p>
+<pre>
+static int Com_EndSearch(Com *self, int in_depth, int in_color, int in_opponent, int in_pass, int *out_move)
+{
+	int x, y;
+	int value, max = -MAX_VALUE;
+	int can_move = 0;
+	int move;
+
+	if (in_depth == 0) {
+		self->Node++;
+		return Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+	}
+	*out_move = NOMOVE;
+	for (x = 0; x < BOARD_SIZE; x++) {
+		for (y = 0; y < BOARD_SIZE; y++) {
+			if (Board_Flip(self->Board, in_color, Board_Pos(x, y))) {
+				if (!can_move) {
+					*out_move = Board_Pos(x, y);
+					can_move = 1;
+				}
+				value = -Com_MidSearch(self, in_depth - 1, in_opponent, in_color, 0, &amp;move);
+				Board_Unflip(self->Board);
+				if (value > max) {
+					max = value;
+					*out_move = Board_Pos(x, y);
+				}
+			}
+		}
+	}
+	if (!can_move) {
+		if (in_pass) {
+			*out_move = NOMOVE;
+			self->Node++;
+			max = Board_CountDisks(self->Board, in_color) - Board_CountDisks(self->Board, in_opponent);
+		} else {
+			*out_move = PASS;
+			max = -Com_MidSearch(self, in_depth, in_opponent, in_color, 1, &amp;move);
+		}
+	}
+	return max;
+}
+</pre>
+</p>
+<p>
+まず引数は以下のようになっています。<br>
+self : Comクラスへのポインタ<br>
+in_depth : 探索の手数（Com_EndSearch()の場合は空きマスの数と一致する）<br>
+in_color : 自分の手番<br>
+in_opponent : 相手の手番<br>
+in_pass : 直前の手がパスなら1、パスでなければ0<br>
+*out_move : 選択した手を格納しておく。<br>
+</p>
+<p>
+処理は以下のようになっています。<br>
+</p>
+<ol>
+<li>
+<p>
+リーフ（in_depthが0）であれば局面の評価値（ここでは石差）を返す。<br>
+</p>
+<li>
+<p>
+リーフでない場合には各マスに対して着手できるかどうかを調べる。<br>
+着手できるのであればCom_EndSearch()を呼び出して着手後の局面の探索を行う。<br>
+これを繰り返して最大の評価値となる手を調べる<br>
+</p>
+<li>
+<p>
+1箇所も着手できない場合には、直前の手がパスであるかどうかを調べる。<br>
+直前の手がパスであれば終局を意味するので局面の評価値（ここでは石差）を返す。<br>
+直前の手がパスでなければパスをしてパス後の局面の探索を行う。<br>
+</p>
+</ol>
+<p>
+まだ中盤の評価が行えないため、Com_MidSearch()はCom_EndSearch()と同じ処理を行うようになっています。<br>
+局面評価については次章で説明します。<br>
+</p>
+<li><b>対局</b>
+<p>
+main()を実行するとコンピュータと対局を行います。<br>
+最初に自分の色を選択して実際に対局してみてください。<br>
+ただし、まだ中盤の評価を行えないため4x4の盤面を使用するようになっています。<br>
+また強さの設定はできず、常に最善手を選択するようになっています。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="2_3.html">＜前へ＞</a>
+<a href="2_5.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

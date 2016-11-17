@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="0_1.html">＜前へ＞</a>
+<a href="0_3.html">＜次へ＞</a>
+<table width="600" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>リバーシのルール</b>
+</font>
+</td>
+</tr>
+</table>
+<ul>
+<li><b>概要</b>
+<p>
+リバーシは２人で対局するボードゲームです。<br>
+各プレイヤが盤上に交互に石を置いていき、相手の石を自分の石で挟むことによって自分の石にすることができます。<br>
+最終的に石の多い方のプレイヤが勝ちです。<br>
+</p>
+<li><b>用具</b>
+<p>
+<b>盤</b> : 通常64個（8x8）のマスが描かれた盤をつかいます。<br>
+10x10のマスが描かれた盤、正方形でない盤を使用することもあります。<br>
+<b>石</b> : 表裏が黒と白に塗り分けられた円盤です。 <br>
+<br>
+
+</p>
+<li><b>ゲームの開始</b>
+<p>
+ゲーム開始時には、４個の石を下図のように並べます。<br>
+</p>
+<p>
+<img src="../img/board1.gif" width="253" height="253" alt="初期配置">
+</p>
+<li><b>手の進め方</b>
+<p>
+最初に各プレイヤは自分の使う色を決めます。<br>
+次に交互に手を進めますが、黒が先手です。<br>
+</p>
+<p>各プレイヤは交互に盤上に石を置きます。<br>
+このとき、すでに置いてある自分の石と、新たに置いた石とで、相手の石をタテ、ヨコ、ナナメいずれかの方向に挟まなければいけません。<br>
+石は何個でも挟んでよく、またいくつの方向に挟んでもかまいません。<br>
+挟んだ相手の石を全て返して自分の石にした後（下図参照）、相手の番となります。<br>
+</p>
+<p>相手の石を挟める手がない場合にはパスとなり、相手が続けて手を進めます。<br>
+パスの回数に制限はなく、パスの行い過ぎが理由で負ける事はありません。<br>
+また、相手の石をはさめる手が１つでもある場合には、パスをすることはできません。<br>
+その場合には必ず石を置かなければなりません。<br>
+</p>
+<p>
+<table border="0">
+<tr><td><img src="../img/board2.gif" width="286" height="253" alt="石を置く前"></td>
+<td valign="center">>></td>
+<td><img src="../img/board3.gif" width="253" height="253" alt="石を置いた後"></td>
+</tr>
+</table>
+</p>
+<li><b>ゲームの終了</b>
+<p>
+どちらのプレイヤも石を置けなくなったときにはゲーム終了です。<br>
+自分の石が多いほうのプレイヤが勝ちです。<br>
+どちらの石も同じ数の場合には引き分けです。<br>
+</p>
+<p>
+石の数を「石数（いしかず）」、両者の石数の差を「石差（せきさ）」と呼びます。<br>
+例えば盤面に黒石が34個、白石が30個あった場合には「４石差で黒の勝ち」となります。<br>
+</p>
+<li><b>座標</b>
+<p>
+各マスを座標で表すことがあります。<br>
+座標は下図の通りです。<br>
+</p>
+<p>
+<img src="../img/board4.gif" width="253" height="253" alt="座標">
+</p>
+<li><b>特殊なマス</b>
+<p>
+マスによっては特殊な呼び方があります。<br>
+</p>
+<ul>
+<li><b>隅</b>
+<p>
+A1、A8、H1、H8の４マスを隅と呼びます。<br>
+</p>
+<p>
+<img src="../img/board5.gif" width="253" height="253" alt="隅の位置">
+</p>
+<li><b>星またはＸ（エックス）</b>
+<p>
+隅の斜め隣の４マスを星またはＸと呼びます。<br>
+</p>
+<p>
+<img src="../img/board6.gif" width="253" height="253" alt="星の位置">
+</p>
+<li><b>辺</b>
+<p>
+盤の周囲に沿った４列を辺と呼びます。
+</p>
+<p>
+<img src="../img/board7.gif" width="253" height="253" alt="辺の位置">
+</p>
+<li><b>中辺</b>
+<p>
+辺より１つ内側にある列を中辺と呼びます。<br>
+</p>
+<p>
+<img src="../img/board8.gif" width="253" height="253" alt="中辺の位置">
+</p>
+<li><b>Ａ、Ｂ、Ｃ</b>
+<p>
+辺の各マスには名前がついています。<br>
+Ａ : 隅から２マス離れたマス<br>
+Ｂ : 辺の中央にあるマス<br>
+Ｃ : 隅に隣接するマス<br>
+</p>
+<p>
+<img src="../img/board9.gif" width="253" height="253" alt="Ａ、Ｂ、Ｃの位置">
+</p>
+<li><b>ボックス</b>
+<p>
+中央の４x４マスをボックスと呼びます。<br>
+</p>
+<p>
+<img src="../img/board10.gif" width="253" height="253" alt="ボックスの位置">
+</p>
+<li><b>ボックスコーナー</b>
+<p>
+ボックスの隅にあるマスをボックスコーナーと呼びます。
+</p>
+<p>
+<img src="../img/board11.gif" width="253" height="253" alt="ボックスコーナーの位置">
+</p>
+</ul>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="0_1.html">＜前へ＞</a>
+<a href="1_1.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

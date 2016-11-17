@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="2_5.html">＜前へ＞</a>
+<a href="3_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>3.1 評価関数の定義</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章では局面を評価する関数を作成します。<br>
+単に評価を行うだけでなく、評価に使用するパラメータを更新できるようにします。<br>
+対局を重ねて強くなるプログラムを作成するのが本章の目的です。<br>
+</p>
+<p>
+局面評価にはEvaluatorクラスを使用します。<br>
+関数の定義は"evaluator.h"に記述してあります。<br>
+</p>
+<ul>
+<li><b>１石あたりの評価値</b>
+<p>
+"evaluator.h"では以下の定数を定義しています。<br>
+<pre>
+/* １石あたりの評価値 */
+#define DISK_VALUE 1000
+</pre>
+</p>
+<p>
+この定数によって、評価値が１石あたりどの程度になるのかを決めます。<br>
+例えば評価値が8000であれば、８石勝ちの局面であることを見込んでいます。<br>
+</p>
+<li><b>Evaluator *Evaluator_New(void)</b>
+<p>
+評価クラスの生成を行います。<br>
+引数 なし
+戻り値 生成したEvaluatorクラス
+</p>
+<li><b>void Evaluator_Delete(Evaluator *self)</b>
+<p>
+評価クラスの破棄を行います。<br>
+引数<br>
+&nbsp;self : Evaluatorクラスへのポインタ<br>
+戻り値 なし<br>
+</p>
+<li><b>int Evaluator_Load(Evaluator *self, const char *in_file_name)</b>
+<p>
+評価パラメータをファイルから読み込みます。<br>
+引数<br>
+&nbsp;self : Evaluatorクラスへのポインタ<br>
+&nbsp;in_file_name : 評価パラメータのファイル名<br>
+戻り値 読み込みに成功したら1、失敗したら0<br>
+</p>
+<li><b>int Evaluator_Save(const Evaluator *self, const char *in_file_name)</b>
+<p>
+評価パラメータをファイルに書き込みます。<br>
+引数<br>
+&nbsp;self : Evaluatorクラスへのポインタ<br>
+&nbsp;in_file_name : 評価パラメータのファイル名<br>
+戻り値 書き込みに成功したら1、失敗したら0<br>
+</p>
+<li><b>int Evaluator_Value(const Evaluator *self, const Board *in_board)</b>
+<p>
+与えられた盤面の評価を行います。<br>
+盤面は黒番であるとして評価を行います。<br>
+引数<br>
+&nbsp;self : Evaluatorクラスへのポインタ<br>
+&nbsp;in_board : 評価を行う盤面<br>
+戻り値 盤面の評価値<br>
+</p>
+<li><b>void Evaluator_Update(Evaluator *self, const Board *in_board, int in_value)</b>
+<p>
+与えられた盤面と評価値に基づいて評価パラメータの更新を行います。<br>
+与えられた盤面に含まれる評価パラメータが更新されます。<br>
+引数<br>
+&nbsp;self : Evaluatorクラスへのポインタ<br>
+&nbsp;in_board : 盤面<br>
+&nbsp;in_value : 盤面の評価値<br>
+戻り値 なし<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="2_5.html">＜前へ＞</a>
+<a href="3_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>

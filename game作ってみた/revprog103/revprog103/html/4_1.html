@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="jp">
+<head>
+<title>
+リバーシプログラムの作り方
+</title>
+</head>
+<body background="../img/bg.gif" bgcolor="#ffffff" text="#000000" link="#0000ff" vlink="#0000ff" alink="#9900ff">
+<a href="../index.html">＜目次＞</a>
+<a href="3_8.html">＜前へ＞</a>
+<a href="4_2.html">＜次へ＞</a>
+<table width="600" border="0" cellpadding="3">
+<tr bgcolor="#333399">
+<td>
+<font size=+1 color="#ffffff">
+<b>4.1 石数取得の高速化</b>
+</font>
+</td>
+</tr>
+</table>
+<p>
+本章では前章までに作成したプログラムの性能改善を行ないます。<br>
+主に処理を高速化するために無駄と思える処理を省いたり工夫したりします。<br>
+</p>
+<p>
+本節では、石数取得関数Board_CountDisks()の高速化を行ないます。<br>
+Board_CountDisks()は終盤探索のリーフで呼ばれるので、呼び出し頻度がかなり高い関数です。<br>
+よく呼び出される関数を高速化しておくと、全体として大きな高速化を望めます。<br>
+</p>
+<ul>
+<li><b>石数格納変数の追加</b>
+<p>
+現在のBoard_CountDisks()は、呼び出される度に盤面の石を数えるという作業を行なっています。<br>
+この処理は時間がかかるので、石数を格納する変数を用意してBoard_CountDisks()ではその値を返すだけにします。<br>
+まずBoard構造体にメンバ変数を追加します。<br>
+</p>
+<p>
+<pre>
+struct _Board
+{
+	int Disk[NUM_DISK];
+	int Stack[NUM_STACK];
+	int *Sp;
+<font color="red">	/* 石数格納変数を追加する */
+	int DiskNum[3];</font>
+};
+</pre>
+</p>
+<p>
+DiskNumを追加しました。<br>
+DiskNum[BLACK]が黒石の数、DiskNum[WHITE]が白石の数、DiskNum[EMPTY]が空きマスの数を表します。<br>
+</p>
+<li><b>Board_CountDisks()の修正</b>
+<p>
+Board_CountDisks()はDiskNumの値を返すだけにします。<br>
+</p>
+<p>
+<pre>
+int Board_CountDisks(const Board *self, int in_color)
+{
+<font color="red">	return self->DiskNum[in_color];</font>
+}
+</pre>
+</p>
+<p>
+次に必要なのは、「石数が変更されるとき」にDiskNumの値を変更する処理です。<br>
+これにはいくつかの関数で修正が必要です。<br>
+</p>
+<li><b>盤面初期化関数の修正</b>
+盤面の初期化時にDiskNumも初期化します。<br>
+<p>
+<pre>
+void Board_Clear(Board *self)
+{
+	int i, j;
+
+	for (i = 0; i < NUM_DISK; i++) {
+		self->Disk[i] = WALL;
+	}
+	for (i = 0; i < BOARD_SIZE; i++) {
+		for (j = 0; j < BOARD_SIZE; j++) {
+			self->Disk[Board_Pos(i, j)] = EMPTY;
+		}
+	}
+	self->Disk[E4] = BLACK;
+	self->Disk[D5] = BLACK;
+	self->Disk[D4] = WHITE;
+	self->Disk[E5] = WHITE;
+
+	self->Sp = self->Stack;
+<font color="red">	/* 石数の初期化 */
+	self->DiskNum[BLACK] = 2;
+	self->DiskNum[WHITE] = 2;
+	self->DiskNum[EMPTY] = BOARD_SIZE * BOARD_SIZE - 4;</font>
+}
+</p>
+</pre>
+<li><b>着手関数の修正</b>
+<p>
+着手を行なうと石数が変わるので、Board_Flip()を以下のように修正します。<br>
+Ｎ石返したら自分の石をＮ＋１石増やし、相手の石をN石減らし、空きマスを１個減らします。<br>
+</p>
+<p>
+<pre>
+int Board_Flip(Board *self, int in_color, int in_pos)
+{
+	int result = 0;
+
+	if (self->Disk[in_pos] != EMPTY) {
+		return 0;
+	}
+	result += Board_FlipLine(self, in_color, in_pos, DIR_UP_LEFT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_UP);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_UP_RIGHT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_LEFT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_RIGHT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_LEFT);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN);
+	result += Board_FlipLine(self, in_color, in_pos, DIR_DOWN_RIGHT);
+	if (result > 0) {
+		self->Disk[in_pos] = in_color;
+		BOARD_STACK_PUSH(self, in_pos);
+		BOARD_STACK_PUSH(self, OPPONENT_COLOR(in_color));
+		BOARD_STACK_PUSH(self, result);
+<font color="red">		/* 石数の変更 */
+		self->DiskNum[in_color] += result + 1;
+		self->DiskNum[OPPONENT_COLOR(in_color)] -= result;
+		self->DiskNum[EMPTY]--;</font>
+	}
+
+	return result;
+}
+</pre>
+</p>
+<li><b>１手戻す関数の修正</b>
+<p>
+着手したら石数が変わるので、逆に１手戻す場合にも石数が変わります。<br>
+着手の場合と逆になるように石数の変更を行ないます。<br>
+</p>
+<p>
+<pre>
+int Board_Unflip(Board *self)
+{
+	int result;
+	int i, color;
+
+	if (self->Sp <= self->Stack) {
+		return 0;
+	}
+	result = BOARD_STACK_POP(self);
+	color = BOARD_STACK_POP(self);
+	self->Disk[BOARD_STACK_POP(self)] = EMPTY;
+	for (i = 0; i < result; i++) {
+		self->Disk[BOARD_STACK_POP(self)] = color;
+	}
+<font color="red">	/* 石数の変更 */
+	self->DiskNum[color] += result;
+	self->DiskNum[OPPONENT_COLOR(color)] -= result + 1;
+	self->DiskNum[EMPTY]++;</font>
+
+	return result;
+}
+</pre>
+</p>
+<li><b>盤面反転処理の修正</b>
+<p>
+最後に盤面反転処理Board_Reverse()の修正を行ないます。<br>
+</p>
+<p>
+<pre>
+void Board_Reverse(Board *self)
+{
+	int pos;
+	int *p;
+	int n;
+
+	for (pos = 0; pos < NUM_DISK; pos++) {
+		if (self->Disk[pos] == BLACK) {
+			self->Disk[pos] = WHITE;
+<font color="red">			/* 石数の変更 */
+			self->DiskNum[BLACK]--;
+			self->DiskNum[WHITE]++;</font>
+		} else if (self->Disk[pos] == WHITE) {
+			self->Disk[pos] = BLACK;
+<font color="red">			/* 石数の変更 */
+			self->DiskNum[WHITE]--;
+			self->DiskNum[BLACK]++;</font>
+		}
+	}
+	p = self->Sp;
+	for (p = self->Sp; p > self->Stack;) {
+		p--;
+		n = *p;
+		p--;
+		*p = OPPONENT_COLOR(*p);
+		p -= n + 1;
+	}
+}
+</pre>
+</p>
+<p>
+では修正したソースコードをコンパイルして実行してみましょう。<br>
+終盤探索は速くなったでしょうか？
+</p>
+<p>
+筆者が試したところでは終盤探索が1.5倍くらい早くなっていました。<br>
+高速化はされていますが、いまひとつという感じもあります。<br>
+実はまだまだ無駄な処理が多いのです。<br>
+次節からさらなる高速化を進めていきます。<br>
+</p>
+</ul>
+<a href="../index.html">＜目次＞</a>
+<a href="3_8.html">＜前へ＞</a>
+<a href="4_2.html">＜次へ＞</a>
+<hr>
+&copy;2006 Daiki Sanno, All Rights Reserved<br>
+<a href="mailto:support@es-cube.net">mailto:support@es-cube.net</a><br>
+</body>
+</html>
