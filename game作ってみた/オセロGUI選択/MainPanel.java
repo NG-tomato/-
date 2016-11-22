@@ -19,17 +19,30 @@ public class MainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
-	RandomCPU w_cpu = new RandomCPU(Squares);
+	RandomCPU w_cpu = new RandomCPU(-1,Squares);
 	//black
-	RandomCPU2 b_cpu = new RandomCPU2(Squares);
+	RandomCPU b_cpu = new RandomCPU(1, Squares);
+	
+	//勝敗の結果の合計を入れる配列
+	int winCount[] = new int[3];
 	
 	//メインパネルを作成するメソッド
-	public MainPanel(){
-		TextDisplay();
-		Game();
+	public MainPanel(int count){
+		for(int i = 0; i < count; i++){
+			//TextDisplay();
+			Game();
+			state.reset();
+		}
+		
+		System.out.println();
+		System.out.println("---Roop END---");
+		System.out.println("Black win : " + winCount[0]);
+		System.out.println("White win : " + winCount[1]);
+		System.out.println("Drow      : " + winCount[2]);
+
 	}
 	
-	
+	/*
 	//描写を行うメソッド
 	public void TextDisplay(){
 				
@@ -60,9 +73,9 @@ public class MainPanel{
 		System.out.println("PLAYER = "+state.player);
 		System.out.println("DISC = "+state.black+" : " +state.white);
 		System.out.println("\n \n");
-
+		
 	}
-	
+	*/
 	
 	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
@@ -77,7 +90,7 @@ public class MainPanel{
 				//座標が以外で置ける場所がある場合のみ駒を置く処理をする
 				if(b_action[0] != -1){
 					state.put(b_action[0], b_action[1]);
-					System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
+					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
 				}
 				/*盤面が埋まったら終了
 				if(state.turn == (Squares * Squares) - 4){
@@ -92,7 +105,7 @@ public class MainPanel{
 				//置ける場所がある場合のみ駒を置く処理をする
 				if(w_action[0] != -1){
 					state.put(w_action[0], w_action[1]);
-					System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
+					//System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
 				}
 				
 				/*盤面が埋まったら終了
@@ -101,23 +114,35 @@ public class MainPanel{
 					EndGame();
 				}*/
 			}
-			TextDisplay();
+			//TextDisplay();
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;
 				//両方パスだと終了
 				if(state.checkPass() == true){
 					EndGame();
+					break;
 				}
-				System.out.println("Pass! Next turn is : "+state.player);
+				//System.out.println("Pass! Next turn is : "+state.player);
 			}
 		}
 	}
 	
 	
 	public void EndGame(){
-		System.out.println("---Game END---");
-		System.out.println(state.Win());		
-		System.exit(0);
+		//System.out.println("---Game END---");
+		int End = state.Win();
+		String Winner;
+		if(End == 1){
+		//	Winner = "black";
+			winCount[0] ++;
+		}else if(End == -1){
+		//	Winner = "white";
+			winCount[1] ++;
+		}else {
+		//	Winner = "Drow";
+			winCount[2] ++;
+		}
+		//System.out.println(Winner + " Win !");
 	}
 }

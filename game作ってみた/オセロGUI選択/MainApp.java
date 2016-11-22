@@ -11,7 +11,12 @@ public class MainApp {
 
 	public MainApp(int number){
 		if(number == 1){
-			MainPanel panel = new MainPanel();
+			//•¶šo—Í
+			System.out.println("Please input roop count");
+			//ŒJ‚è•Ô‚µ‰ñ”“Ç‚İ‚İ
+			Scanner scan = new Scanner(System.in);
+			int count = scan.nextInt();
+			MainPanel panel = new MainPanel(count);
 		}else if(number == 2){
 			MainApp2 panel = new MainApp2();
 			panel.setVisible(true);

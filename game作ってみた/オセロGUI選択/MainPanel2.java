@@ -38,9 +38,9 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
-	RandomCPU w_cpu = new RandomCPU(Squares);
+	RandomCPU w_cpu = new RandomCPU(-1, Squares);
 	//black
-	RandomCPU2 b_cpu = new RandomCPU2(Squares);
+	RandomCPU b_cpu = new RandomCPU(1, Squares);
 	
 	//メインパネルを作成するメソッド
 	public MainPanel2(){
@@ -218,7 +218,17 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 			state.player *= -1;
 			//両方パスだと終了
 			if(state.checkPass() == true){
-				JOptionPane.showMessageDialog(this, "End! " + state.Win() + "!");
+				int End = state.Win();
+				String Winner;
+				if(End == 1){
+					Winner = "black";
+				}else if(End == 1){
+					Winner = "white";
+				}else {
+					Winner = "Drow";
+				}
+
+				JOptionPane.showMessageDialog(this, "End! " + Winner + " Win !");
 				return;
 			}
 			JOptionPane.showMessageDialog(this, "Pass! Next turn is "+state.turn);

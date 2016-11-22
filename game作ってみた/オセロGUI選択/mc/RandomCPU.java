@@ -1,13 +1,17 @@
+//Monte Carlo法のCPUのパッケージ
+package mc.mcCPU;
+
+
 import java.util.*;
 
-public class RandomCPU2 {
+public class RandomCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
 	int size;
 	
-	public RandomCPU2(int s){
-		color = 1;
+	public RandomCPU(int c,int s){
+		color = c;
 		size = s;
 	}
 	
