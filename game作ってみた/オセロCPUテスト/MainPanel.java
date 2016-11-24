@@ -1,7 +1,5 @@
 //表示させるパネルを作成するクラス
 
-//Monte Carlo法のCPUのパッケージ
-import mc.*;
 
 
 //共通の処理のメソッド(日時機能、国際化、乱数ジェネレータ)を集めたクラス（ユーティリティクラス）
@@ -23,7 +21,7 @@ public class MainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1,Squares);
+	mcCPU w_cpu = new mcCPU(-1,Squares);
 	//black
 	RandomCPU b_cpu = new RandomCPU(1, Squares);
 	

@@ -1,5 +1,5 @@
 //Monte Carlo法のCPUのパッケージ
-package mc.mcCPU;
+package mc.mc;
 
 import java.util.*;
 

@@ -38,7 +38,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	
 	//ƒ‰ƒ“ƒ_ƒ€‚Å‘Å‚ÂAI‚ÌƒNƒ‰ƒXRandomCPU‚ğì¬
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	mcCPU w_cpu = new mcCPU(-1,Squares);
 	//black
 	RandomCPU b_cpu = new RandomCPU(1, Squares);
 	
@@ -222,7 +222,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 				String Winner;
 				if(End == 1){
 					Winner = "black";
-				}else if(End == -1){
+				}else if(End == 1){
 					Winner = "white";
 				}else {
 					Winner = "Drow";

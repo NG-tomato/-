@@ -1,16 +1,14 @@
-//Monte Carlo法のCPUのパッケージ
-package mc.mc;
-
 
 import java.util.*;
 
-public class RandomCPU {
+//Monte Carlo法の略 → mc
+public class mcCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
 	int size;
 	
-	public RandomCPU(int c,int s){
+	public mcCPU(int c,int s){
 		color = c;
 		size = s;
 	}
@@ -41,7 +39,6 @@ public class RandomCPU {
 			}
 		}
 		
-		//ランダム選択
 		
 		//置ける場所がない場合は座標が{-1,-1}として返す
 		if(array.size() <= 0){
@@ -49,19 +46,20 @@ public class RandomCPU {
 			return pos;
 		}
 		
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
-		
-		/*
-		ランダムクラス内のnextIntメソッドを利用し乱数を作成
-		nextInt(x);
-		0からxまでが乱数が取る可能性がある値
-		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
-		*/
-		int index = rnd.nextInt(array.size());
-		
-		//乱数で選ばれた置ける場所を返す
-		return array.get(index);
+		//それぞれの手の点数を保存する配列
+		int[] point = new int[array.size()];
+			for(int i=0; i < array.size(); i++){
+				jr_MainPanel panel = new jr_MainPanel(state.data, state.turn, state.player, array.get(i));
+				point[i] = panel.rePoint();
+			}
+		int j = 0;
+		for(int i = 1; i < array.size(); i++){
+			if(point[i] > point[j]){
+				j = i;
+			}
+		}
+		//選ばれた置ける場所を返す
+		return array.get(j);
 	}
 	
 }

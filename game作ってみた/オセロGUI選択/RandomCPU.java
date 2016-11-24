@@ -1,7 +1,3 @@
-//Monte Carlo法のCPUのパッケージ
-package mc.mc;
-
-
 import java.util.*;
 
 public class RandomCPU {

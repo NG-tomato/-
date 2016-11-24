@@ -1,12 +1,10 @@
-//Monte Carlo法のCPUのパッケージ
-package mc.mc;
 
 import java.util.*;
 import java.util.Arrays;
 
 
 //Observableを継承することで、updateメソッドなどの監視対象となるクラスとなる
-public class GameState extends Observable{
+public class jr_GameState extends Observable{
 	/*
 	状態として保持するデータ
 	data 現在の駒が置かれている場所を保持する縦と横の多次元配列
@@ -31,7 +29,7 @@ public class GameState extends Observable{
 	
 	
 	//最初の状態を作るメソッド
-	public GameState(int s, int[][] d ,int t, int p, int x, int y){
+	public jr_GameState(int s, int[][] d ,int t, int p, int x, int y){
 		size = s;
 		data = d;
 		turn = t;
