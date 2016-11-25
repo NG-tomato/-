@@ -1,10 +1,8 @@
-
 import java.util.*;
 import java.util.Arrays;
 
-
 //Observableを継承することで、updateメソッドなどの監視対象となるクラスとなる
-public class jr_GameState extends Observable{
+public class mcGameState extends Observable{
 	/*
 	状態として保持するデータ
 	data 現在の駒が置かれている場所を保持する縦と横の多次元配列
@@ -22,24 +20,26 @@ public class jr_GameState extends Observable{
 	int white;
 	int size;
 	
-	//上記のデータの保存(resetするときに利用する)
-	int s_data[][];
-	int s_turn;
-	int s_player;
-	
-	
 	//最初の状態を作るメソッド
-	public jr_GameState(int s, int[][] d ,int t, int p, int x, int y){
+	public mcGameState(int s){
 		size = s;
-		data = d;
-		turn = t;
-		player = p;
-		
-		put(x, y);
-		
-		s_data = data;
-		s_turn = turn;
-		s_player = player;
+		//初期値（真ん中の４つが交互にある状態）を作成
+		data = new int[size + 2][size + 2];
+		data[size/2][size/2] = 1;
+		data[size/2][size/2 + 1] = -1;
+		data[size/2 + 1][size/2] = -1;
+		data[size/2 + 1][size/2 + 1] = 1;
+		//壁を作成
+		for(int i = 0;i < size + 1; i++){
+			data[0][i] = 2;
+			data[size + 1][i + 1] = 2;
+			data[i + 1][0] = 2;
+			data[i][size + 1] = 2;
+		}
+		turn = 0;
+		player = 1;
+		black = 2;
+		white = 2;
 	}
 		
 	/*
@@ -233,8 +233,6 @@ public class jr_GameState extends Observable{
 			}
 		}
 	}
-	
-	//勝ちかどうかの判定をするメソッド
 	public int Win(){
 		if(black > white){
 			return 1;
@@ -247,9 +245,30 @@ public class jr_GameState extends Observable{
 	
 	//初期状態に戻すメソッド
 	public void reset(){
-		data = s_data;
-		turn = s_turn;
-		player = s_player;
-		countDisc();
+		data = new int[size + 2][size + 2];
+		data[size/2][size/2] = 1;
+		data[size/2][size/2 + 1] = -1;
+		data[size/2 + 1][size/2] = -1;
+		data[size/2 + 1][size/2 + 1] = 1;
+		//壁を作成
+		for(int i = 0;i < size + 1; i++){
+			data[0][i] = 2;
+			data[size + 1][i + 1] = 2;
+			data[i + 1][0] = 2;
+			data[i][size + 1] = 2;
+		}
+		turn = 0;
+		player = 1;
+		black = 2;
+		white = 2;
+		
 	}
+	
+	public void set(int[][] d, int t, int p){
+		data = d;
+		turn = t;
+		player = p;
+
+	}
+
 }

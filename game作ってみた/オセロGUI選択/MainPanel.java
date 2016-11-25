@@ -22,16 +22,26 @@ public class MainPanel{
 	GameState state = new GameState(Squares);
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
-	//white
-	RandomCPU w_cpu = new RandomCPU(-1,Squares);
 	//black
-	RandomCPU b_cpu = new RandomCPU(1, Squares);
+	RandomCPU b_cpu = new RandomCPU(1,Squares);
+	//white
+	RandomCPU w_cpu = new RandomCPU(-1, Squares);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
 	//メインパネルを作成するメソッド
-	public MainPanel(int count){
+	public MainPanel(int count,int B_CPU, int W_CPU){
+		//CPUを選択
+		//ランダムで打つAIのクラスRandomCPUを作成
+		//black
+		if(B_CPU == 1){
+		}
+		//ランダムで打つAIのクラスRandomCPUを作成
+		//white
+		if(W_CPU == 1){
+		}
+		
 		for(int i = 0; i < count; i++){
 			//TextDisplay();
 			Game();

@@ -12,39 +12,45 @@ implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある
 MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
-public class MainPanel{
+public class mcMainPanel{
 	//縦横のマス
 	int Squares = 8;
-	
+	int data[][];
+	int count = 1;
+	int turn;
+	int player;
+		
 	//状態を表すクラスstateを作成
-	GameState state = new GameState(Squares);
+	mcGameState state = new mcGameState(Squares);
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
-	mcCPU w_cpu = new mcCPU(-1,Squares);
+	mcRandomCPU w_cpu = new mcRandomCPU(-1,Squares);
 	//black
-	RandomCPU b_cpu = new RandomCPU(1, Squares);
+	mcRandomCPU b_cpu = new mcRandomCPU(1, Squares);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
 	//メインパネルを作成するメソッド
-	public MainPanel(int count){
-		for(int i = 0; i < count; i++){
-			//TextDisplay();
-			Game();
-			state.reset();
-		}
-		
-		System.out.println();
-		System.out.println("---Roop END---");
-		System.out.println("Black win : " + winCount[0]);
-		System.out.println("White win : " + winCount[1]);
-		System.out.println("Drow      : " + winCount[2]);
-
+	public mcMainPanel(int[][] d,int c, int t, int p){
+		data = d;
+		count = c;
+		turn = t;
+		player = p;
 	}
 	
+	public void mcGame(int x , int y){
+		for(int i = 0; i < count; i++){
+			state.set(data, turn, player);
+			state.put(x, y);
+			//TextDisplay();
+			Game();
+			//System.out.println("あああ");
+		}
+	}
 	
+	/*
 	//描写を行うメソッド
 	public void TextDisplay(){
 				
@@ -77,7 +83,7 @@ public class MainPanel{
 		System.out.println("\n \n");
 		
 	}
-	
+	*/
 	
 	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
@@ -116,13 +122,12 @@ public class MainPanel{
 					EndGame();
 				}*/
 			}
-			TextDisplay();
+			//TextDisplay();
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;
 				//両方パスだと終了
 				if(state.checkPass() == true){
-					TextDisplay();
 					EndGame();
 					break;
 				}
@@ -147,5 +152,11 @@ public class MainPanel{
 			winCount[2] ++;
 		}
 		//System.out.println(Winner + " Win !");
+	}
+	
+	public int rePoint(){
+		//勝ちが10点，引き分けが5点で評価値を計算
+		int point = winCount[0]*10 + winCount[2]*5;
+		return point;
 	}
 }

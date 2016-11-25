@@ -8,6 +8,9 @@ public class mcCPU {
 	int color;	//BLACK or WHITE
 	int size;
 	
+	//プレイアウト数
+	int count = 10; 
+	
 	public mcCPU(int c,int s){
 		color = c;
 		size = s;
@@ -46,11 +49,16 @@ public class mcCPU {
 			return pos;
 		}
 		
+		mcMainPanel mcpanel = new mcMainPanel(state.data, count, state.turn, state.player);
+		
 		//それぞれの手の点数を保存する配列
 		int[] point = new int[array.size()];
 			for(int i=0; i < array.size(); i++){
-				jr_MainPanel panel = new jr_MainPanel(state.data, state.turn, state.player, array.get(i));
-				point[i] = panel.rePoint();
+				int a[] = array.get(i);
+				int x = a[0];
+				int y = a[1];
+				mcpanel.mcGame(x,y);
+				point[i] = mcpanel.rePoint();
 			}
 		int j = 0;
 		for(int i = 1; i < array.size(); i++){
@@ -59,6 +67,7 @@ public class mcCPU {
 			}
 		}
 		//選ばれた置ける場所を返す
+		System.out.println(array.get(j)[0] + ", " + array.get(j)[1]);
 		return array.get(j);
 	}
 	

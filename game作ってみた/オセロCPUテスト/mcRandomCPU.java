@@ -1,18 +1,17 @@
-
 import java.util.*;
 
-public class jr_RandomCPU {
+public class mcRandomCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
 	int size;
 	
-	public jr_RandomCPU(int c,int s){
+	public mcRandomCPU(int c,int s){
 		color = c;
 		size = s;
 	}
 	
-	int[] decide(jr_GameState state){
+	int[] decide(mcGameState state){
 		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
