@@ -1,22 +1,18 @@
-
 import java.util.*;
 
-//Monte Carlo法の略 → mc
 public class mcCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
 	int size;
 	
-	//プレイアウト数
-	int count = 3; 
 	
-	int data[][];
+	//プレイアウト数
+	int count = 10;
 	
 	public mcCPU(int c,int s){
 		color = c;
 		size = s;
-		data = new int[size + 2][size + 2];
 	}
 	
 	int[] decide(GameState state){
@@ -45,6 +41,7 @@ public class mcCPU {
 			}
 		}
 		
+		//ランダム選択
 		
 		//置ける場所がない場合は座標が{-1,-1}として返す
 		if(array.size() <= 0){
@@ -52,20 +49,18 @@ public class mcCPU {
 			return pos;
 		}
 		
-		data = Arrays.copyOf(state.data, state.data.length);
+		mcMainPanel p = new mcMainPanel(count, Arrays.copyOf(state.data, state.data.length), state.turn, state.player);
 		
-		mcMainPanel mcpanel = new mcMainPanel(data, count, state.turn, state.player);
+		//p.TextDisplay();
+		//System.out.println(Arrays.deepToString(state.data));
 		
 		//それぞれの手の点数を保存する配列
 		int[] point = new int[array.size()];
 		
 		for(int i=0; i < array.size(); i++){
 			int a[] = array.get(i);
-			int x = a[0];
-			int y = a[1];
-		mcpanel.mcGame(x,y);
-				point[i] = mcpanel.rePoint();
-			}
+			point[i] = p.mcGame(a, state.player);
+		}
 		
 		//ポイントが最大の手を求める
 		int j = 0;
@@ -74,10 +69,24 @@ public class mcCPU {
 				j = i;
 			}
 		}
-		
-		//選ばれた置ける場所を返す
-		System.out.println(array.get(j)[0] + ", " + array.get(j)[1]);
+		System.out.println(point[j]);
 		return array.get(j);
-	}
+		
+		/*
+		//ランダムクラスのインスタンス化
+		Random rnd = new Random();
+		
+		/*
+		//ランダムクラス内のnextIntメソッドを利用し乱数を作成
+		nextInt(x);
+		0からxまでが乱数が取る可能性がある値
+		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
+		
+		int index = rnd.nextInt(array.size());
+		
+		//乱数で選ばれた置ける場所を返す
+		return array.get(index);
+		*/
+}
 	
 }
