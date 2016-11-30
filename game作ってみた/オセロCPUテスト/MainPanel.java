@@ -22,6 +22,8 @@ public class MainPanel{
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
 	mcCPU w_cpu = new mcCPU(-1,Squares);
+	//RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	
 	//black
 	RandomCPU b_cpu = new RandomCPU(1, Squares);
 	
@@ -44,7 +46,7 @@ public class MainPanel{
 
 	}
 	
-	/*
+	
 	//描写を行うメソッド
 	public void TextDisplay(){
 				
@@ -77,7 +79,7 @@ public class MainPanel{
 		System.out.println("\n \n");
 		
 	}
-	*/
+	
 	
 	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
@@ -116,12 +118,13 @@ public class MainPanel{
 					EndGame();
 				}*/
 			}
-			//TextDisplay();
+			TextDisplay();
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;
 				//両方パスだと終了
 				if(state.checkPass() == true){
+					TextDisplay();
 					EndGame();
 					break;
 				}
