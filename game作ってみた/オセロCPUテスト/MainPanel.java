@@ -22,6 +22,8 @@ public class MainPanel{
 	//ƒ‰ƒ“ƒ_ƒ€‚Å‘Å‚ÂAI‚ÌƒNƒ‰ƒXRandomCPU‚ğì¬
 	//white
 	mcCPU w_cpu = new mcCPU(-1,Squares);
+	//RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	
 	//black
 	RandomCPU b_cpu = new RandomCPU(1, Squares);
 	

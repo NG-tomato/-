@@ -1,0 +1,8 @@
+String[] aaa = {"1", "2", "3", "4"};
+String[] bbb = Arrays.copyOf(aaa, aaa.length);
+
+
+
+å„âÒÇµ
+
+CPUïœçXã@î\

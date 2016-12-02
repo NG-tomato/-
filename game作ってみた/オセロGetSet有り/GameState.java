@@ -2,7 +2,9 @@ import java.util.*;
 import java.util.Arrays;
 
 //Observable‚ğŒp³‚·‚é‚±‚Æ‚ÅAupdateƒƒ\ƒbƒh‚È‚Ç‚ÌŠÄ‹‘ÎÛ‚Æ‚È‚éƒNƒ‰ƒX‚Æ‚È‚é
-public class mcGameState extends Observable{
+public class GameState extends Observable{
+//public class GameState{
+
 	/*
 	ó‘Ô‚Æ‚µ‚Ä•Û‚·‚éƒf[ƒ^
 	data Œ»İ‚Ì‹î‚ª’u‚©‚ê‚Ä‚¢‚éêŠ‚ğ•Û‚·‚éc‚Æ‰¡‚Ì‘½ŸŒ³”z—ñ
@@ -21,7 +23,7 @@ public class mcGameState extends Observable{
 	int size;
 	
 	//Å‰‚Ìó‘Ô‚ğì‚éƒƒ\ƒbƒh
-	public mcGameState(int s){
+	public GameState(int s){
 		size = s;
 		//‰Šú’li^‚ñ’†‚Ì‚S‚Â‚ªŒğŒİ‚É‚ ‚éó‘Ôj‚ğì¬
 		data = new int[size + 2][size + 2];
@@ -262,24 +264,18 @@ public class mcGameState extends Observable{
 		black = 2;
 		white = 2;
 		
-<<<<<<< HEAD:gameä½œã£ã¦ã¿ãŸ/ã‚ªã‚»ãƒ­CPUãƒ†ã‚¹ãƒˆ/mcGameState.java
 	}
 	
 	public void set(int[][] d, int t, int p){
-		data = d;
+		for(int i = 1;i < size + 1; i++){
+			for(int j = 1;j < size + 1; j++){
+				data[i][j] = d[i][j];
+			}
+		}
+		
+		
 		turn = t;
 		player = p;
-
+		countDisc();
 	}
-=======
-	}
-	
-	public void set(int[][] d, int t, int p){
-		data = Arrays.copyOf(d, d.length);;
-		turn = t;
-		player = p;
-
-	}
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166:gameä½œã£ã¦ã¿ãŸ/ã‚ªã‚»ãƒ­CPUãƒ†ã‚¹ãƒˆ/mcGameState.java
-
 }
