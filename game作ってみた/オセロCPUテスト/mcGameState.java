@@ -262,16 +262,6 @@ public class mcGameState extends Observable{
 		black = 2;
 		white = 2;
 		
-<<<<<<< HEAD:game作ってみた/オセロCPUテスト/mcGameState.java
-	}
-	
-	public void set(int[][] d, int t, int p){
-		data = d;
-		turn = t;
-		player = p;
-
-	}
-=======
 	}
 	
 	public void set(int[][] d, int t, int p){
@@ -280,6 +270,5 @@ public class mcGameState extends Observable{
 		player = p;
 
 	}
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166:game作ってみた/オセロCPUテスト/mcGameState.java
 
 }

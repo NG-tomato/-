@@ -19,14 +19,11 @@ public class mcMainPanel{
 	int count = 1;
 	int turn;
 	int player;
-<<<<<<< HEAD
-=======
 	
 	int s_data[][];
 	int s_turn;
 	int s_player;
 	
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 		
 	//状態を表すクラスstateを作成
 	mcGameState state = new mcGameState(Squares);
@@ -42,12 +39,6 @@ public class mcMainPanel{
 	
 	//メインパネルを作成するメソッド
 	public mcMainPanel(int[][] d,int c, int t, int p){
-<<<<<<< HEAD
-		data = d;
-		count = c;
-		turn = t;
-		player = p;
-=======
 		data = new int[Squares][Squares];
 		data = Arrays.copyOf(d, d.length);
 		count = c;
@@ -59,18 +50,13 @@ public class mcMainPanel{
 		s_turn = t;
 		s_player = p;;
 
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 	}
 	
 	public void mcGame(int x , int y){
 		for(int i = 0; i < count; i++){
-<<<<<<< HEAD
-			state.set(data, turn, player);
-=======
 			//state.reset();
 			state.set(s_data, s_turn, s_player);
 			TextDisplay();
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 			state.put(x, y);
 			//TextDisplay();
 			Game();
@@ -78,11 +64,7 @@ public class mcMainPanel{
 		}
 	}
 	
-<<<<<<< HEAD
-	/*
-=======
 	
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 	//描写を行うメソッド
 	public void TextDisplay(){
 				
@@ -115,11 +97,7 @@ public class mcMainPanel{
 		System.out.println("\n \n");
 		
 	}
-<<<<<<< HEAD
-	*/
-=======
 	
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 	
 	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
@@ -152,14 +130,6 @@ public class mcMainPanel{
 					//System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
 				}
 				
-<<<<<<< HEAD
-				/*盤面が埋まったら終了
-				if(state.turn == (Squares * Squares) - 4){
-					TextDisplay();
-					EndGame();
-				}*/
-=======
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 			}
 			//TextDisplay();
 			//パスチェック
@@ -181,18 +151,6 @@ public class mcMainPanel{
 		int End = state.Win();
 		String Winner;
 		if(End == 1){
-<<<<<<< HEAD
-		//	Winner = "black";
-			winCount[0] ++;
-		}else if(End == -1){
-		//	Winner = "white";
-			winCount[1] ++;
-		}else {
-		//	Winner = "Drow";
-			winCount[2] ++;
-		}
-		//System.out.println(Winner + " Win !");
-=======
 		//Winner = "black";
 			winCount[0] ++;
 		}else if(End == -1){
@@ -204,7 +162,6 @@ public class mcMainPanel{
 		}
 		//System.out.println(Winner + " Win !");
 		//TextDisplay();
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 	}
 	
 	public int rePoint(){
