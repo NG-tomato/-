@@ -69,7 +69,7 @@ public class mcMainPanel{
 		*/
 	}
 	
-	public int mcGame(int[] put, int p){
+	public void mcGame(int[] put){
 		
 		for(int i = 0; i < count; i++){
 			//TextDisplay();
@@ -77,15 +77,22 @@ public class mcMainPanel{
 			state.put(put[0], put[1]);
 			Game();
 		}
-		//System.out.println(Arrays.toString(winCount));
-		//System.out.println(bbb);
-		if(p == 1){
-			return winCount[0];
-		}else{
-			return winCount[1];
-		}
 	}
 	
+	
+	public int rePoint(int p){
+		int point = 0;
+		
+		if(p == 1){
+			point = winCount[0];
+		}else{
+			point = winCount[1];
+		}
+		
+		winCount = new int[3];
+		
+		return point;
+	}
 	
 	//描写を行うメソッド
 	public void TextDisplay(){

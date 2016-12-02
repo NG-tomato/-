@@ -1,16 +1,12 @@
 import java.util.*;
 
-public class mcCPU {
+public class RandomCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
 	int size;
 	
-	
-	//プレイアウト数
-	int count = 10;
-	
-	public mcCPU(int c,int s){
+	public RandomCPU(int c,int s){
 		color = c;
 		size = s;
 	}
@@ -49,44 +45,19 @@ public class mcCPU {
 			return pos;
 		}
 		
-		mcMainPanel p = new mcMainPanel(count, Arrays.copyOf(state.data, state.data.length), state.turn, state.player);
-		
-		//p.TextDisplay();
-		//System.out.println(Arrays.deepToString(state.data));
-		
-		//それぞれの手の点数を保存する配列
-		int[] point = new int[array.size()];
-		
-		for(int i=0; i < array.size(); i++){
-			int a[] = array.get(i);
-			point[i] = p.mcGame(a, state.player);
-		}
-		
-		//ポイントが最大の手を求める
-		int j = 0;
-		for(int i = 1; i < array.size(); i++){
-			if(point[i] > point[j]){
-				j = i;
-			}
-		}
-		System.out.println(point[j]);
-		return array.get(j);
-		
-		/*
 		//ランダムクラスのインスタンス化
 		Random rnd = new Random();
 		
 		/*
-		//ランダムクラス内のnextIntメソッドを利用し乱数を作成
+		ランダムクラス内のnextIntメソッドを利用し乱数を作成
 		nextInt(x);
 		0からxまでが乱数が取る可能性がある値
 		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
-		
+		*/
 		int index = rnd.nextInt(array.size());
 		
 		//乱数で選ばれた置ける場所を返す
 		return array.get(index);
-		*/
-}
+	}
 	
 }

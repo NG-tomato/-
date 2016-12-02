@@ -118,7 +118,7 @@ public class MainPanel{
 					EndGame();
 				}*/
 			}
-			//TextDisplay();
+			TextDisplay();
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;

@@ -15,74 +15,85 @@ Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 public class mcMainPanel{
 	//縦横のマス
 	int Squares = 8;
-	int data[][];
-	int count = 1;
-	int turn;
-	int player;
-<<<<<<< HEAD
-=======
 	
-	int s_data[][];
-	int s_turn;
-	int s_player;
-	
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
-		
 	//状態を表すクラスstateを作成
-	mcGameState state = new mcGameState(Squares);
+	GameState state = new GameState(Squares);
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
-	//white
-	mcRandomCPU w_cpu = new mcRandomCPU(-1,Squares);
 	//black
-	mcRandomCPU b_cpu = new mcRandomCPU(1, Squares);
+	RandomCPU b_cpu = new RandomCPU(1,Squares);
+	//white
+	RandomCPU w_cpu = new RandomCPU(-1, Squares);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
+	int s_data[][] = new int[Squares + 2][Squares + 2];
+	int count;
+	int turn;
+	int player;
+	
+	int bbb;
 	//メインパネルを作成するメソッド
-	public mcMainPanel(int[][] d,int c, int t, int p){
-<<<<<<< HEAD
-		data = d;
+	public mcMainPanel(int c, int[][] d, int t, int p){
+		//CPUを選択
+		/*
+		//ランダムで打つAIのクラスRandomCPUを作成
+		//black
+		if(B_CPU == 1){
+		}
+		//ランダムで打つAIのクラスRandomCPUを作成
+		//white
+		if(W_CPU == 1){
+		}
+		*/
+		
 		count = c;
-		turn = t;
-		player = p;
-=======
-		data = new int[Squares][Squares];
-		data = Arrays.copyOf(d, d.length);
-		count = c;
+		//System.arraycopy(d, 0, s_data, 0, d.length);
+		for(int i = 0;i < Squares + 2; i++){
+			for(int j = 0;j < Squares + 2; j++){
+				s_data[i][j] = d[i][j];
+			}
+		}
+
 		turn = t;
 		player = p;
 		
-		s_data = new int[Squares][Squares];
-		s_data =Arrays.copyOf(d, d.length);
-		s_turn = t;
-		s_player = p;;
-
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
-	}
-	
-	public void mcGame(int x , int y){
+		
+		/*
 		for(int i = 0; i < count; i++){
-<<<<<<< HEAD
-			state.set(data, turn, player);
-=======
-			//state.reset();
-			state.set(s_data, s_turn, s_player);
-			TextDisplay();
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
-			state.put(x, y);
 			//TextDisplay();
 			Game();
-			//System.out.println("あああ");
+			state.reset();
+		}
+		*/
+	}
+	
+	public void mcGame(int[] put){
+		
+		for(int i = 0; i < count; i++){
+			//TextDisplay();
+			state.set(s_data, turn, player);
+			state.put(put[0], put[1]);
+			Game();
 		}
 	}
 	
-<<<<<<< HEAD
-	/*
-=======
 	
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
+	public int rePoint(int p){
+		int point = 0;
+		
+		if(p == 1){
+			point = winCount[0];
+		}else{
+			point = winCount[1];
+		}
+		
+		winCount = new int[3];
+		
+		return point;
+	}
+	
 	//描写を行うメソッド
 	public void TextDisplay(){
 				
@@ -115,11 +126,7 @@ public class mcMainPanel{
 		System.out.println("\n \n");
 		
 	}
-<<<<<<< HEAD
-	*/
-=======
 	
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 	
 	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
@@ -152,14 +159,11 @@ public class mcMainPanel{
 					//System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
 				}
 				
-<<<<<<< HEAD
 				/*盤面が埋まったら終了
 				if(state.turn == (Squares * Squares) - 4){
 					TextDisplay();
 					EndGame();
 				}*/
-=======
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
 			}
 			//TextDisplay();
 			//パスチェック
@@ -177,11 +181,11 @@ public class mcMainPanel{
 	
 	
 	public void EndGame(){
+		bbb ++;
 		//System.out.println("---Game END---");
 		int End = state.Win();
-		String Winner;
+		//String Winner;
 		if(End == 1){
-<<<<<<< HEAD
 		//	Winner = "black";
 			winCount[0] ++;
 		}else if(End == -1){
@@ -192,24 +196,5 @@ public class mcMainPanel{
 			winCount[2] ++;
 		}
 		//System.out.println(Winner + " Win !");
-=======
-		//Winner = "black";
-			winCount[0] ++;
-		}else if(End == -1){
-		//Winner = "white";
-			winCount[1] ++;
-		}else {
-		//Winner = "Drow";
-			winCount[2] ++;
-		}
-		//System.out.println(Winner + " Win !");
-		//TextDisplay();
->>>>>>> 00814f12bf8c02deea022ad00e0d192a92b06166
-	}
-	
-	public int rePoint(){
-		//勝ちが10点，引き分けが5点で評価値を計算
-		int point = winCount[0]*10 + winCount[2]*5;
-		return point;
 	}
 }

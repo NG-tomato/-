@@ -2,6 +2,9 @@ String[] aaa = {"1", "2", "3", "4"};
 String[] bbb = Arrays.copyOf(aaa, aaa.length);
 
 
+mc完成
+プレイアウト10　→　1000回　979勝16負5分
+
 
 後回し
 

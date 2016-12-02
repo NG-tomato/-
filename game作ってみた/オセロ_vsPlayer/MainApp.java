@@ -36,10 +36,10 @@ public class MainApp {
 			int count = scan.nextInt();
 			MainPanel panel = new MainPanel(count);
 		}else if(number == 2){
-			/*
+			
 			MainApp2 panel = new MainApp2();
 			panel.setVisible(true);
-			*/
+			
 		}
 	}
 
