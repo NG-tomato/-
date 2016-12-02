@@ -8,7 +8,7 @@ public class mcCPU {
 	
 	
 	//プレイアウト数
-	int count = 100;
+	int count = 10;
 	
 	public mcCPU(int c,int s){
 		color = c;

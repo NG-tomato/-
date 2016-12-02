@@ -23,7 +23,7 @@ public class MainPanel{
 	//black
 	private mcCPU b_cpu = new mcCPU(1,Squares);
 	//white
-	private RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	private mcCPU w_cpu = new mcCPU(-1, Squares);
 	
 	//Ÿ”s‚ÌŒ‹‰Ê‚Ì‡Œv‚ğ“ü‚ê‚é”z—ñ
 	private int winCount[] = new int[3];
