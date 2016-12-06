@@ -12,7 +12,7 @@ implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある
 MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
-public class MainPanel{
+public class mcMainPanel{
 	//縦横のマス
 	int Squares = 8;
 	
@@ -21,18 +21,21 @@ public class MainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	mcCPU b_cpu = new mcCPU(1,Squares);
+	RandomCPU b_cpu = new RandomCPU(1,Squares);
 	//white
-	/*
-	mcCPU w_cpu = new mcCPU(-1, Squares);
-	*/
 	RandomCPU w_cpu = new RandomCPU(-1, Squares);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
+	int s_data[][] = new int[Squares + 2][Squares + 2];
+	int count;
+	int turn;
+	int player;
+	
+	int bbb;
 	//メインパネルを作成するメソッド
-	public MainPanel(int count){
+	public mcMainPanel(int c, int[][] d, int t, int p){
 		//CPUを選択
 		/*
 		//ランダムで打つAIのクラスRandomCPUを作成
@@ -45,20 +48,51 @@ public class MainPanel{
 		}
 		*/
 		
+		count = c;
+		//System.arraycopy(d, 0, s_data, 0, d.length);
+		for(int i = 0;i < Squares + 2; i++){
+			for(int j = 0;j < Squares + 2; j++){
+				s_data[i][j] = d[i][j];
+			}
+		}
+
+		turn = t;
+		player = p;
+		
+		
+		/*
 		for(int i = 0; i < count; i++){
 			//TextDisplay();
 			Game();
 			state.reset();
 		}
-		
-		System.out.println();
-		System.out.println("---Roop END---");
-		System.out.println("Black win : " + winCount[0]);
-		System.out.println("White win : " + winCount[1]);
-		System.out.println("Drow      : " + winCount[2]);
-
+		*/
 	}
 	
+	public void mcGame(int[] put){
+		
+		for(int i = 0; i < count; i++){
+			//TextDisplay();
+			state.set(s_data, turn, player);
+			state.put(put[0], put[1]);
+			Game();
+		}
+	}
+	
+	
+	public int rePoint(int p){
+		int point = 0;
+		
+		if(p == 1){
+			point = winCount[0];
+		}else{
+			point = winCount[1];
+		}
+		
+		winCount = new int[3];
+		
+		return point;
+	}
 	
 	//描写を行うメソッド
 	public void TextDisplay(){
@@ -147,9 +181,10 @@ public class MainPanel{
 	
 	
 	public void EndGame(){
+		bbb ++;
 		//System.out.println("---Game END---");
 		int End = state.Win();
-		String Winner;
+		//String Winner;
 		if(End == 1){
 		//	Winner = "black";
 			winCount[0] ++;
