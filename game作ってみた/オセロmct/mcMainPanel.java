@@ -49,11 +49,7 @@ public class mcMainPanel{
 		
 		count = c;
 		//System.arraycopy(d, 0, s_data, 0, d.length);
-		for(int i = 0;i < size; i++){
-			for(int j = 0;j < size; j++){
-				s_data[i + j * size] = d[i + j * size];
-			}
-		}
+		s_data = Arrays.copyOf(d ,d.length);
 
 		turn = t;
 		player = p;
