@@ -4,15 +4,14 @@ public class mcCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
-	int size;
 	
 	
 	//プレイアウト数
 	int count = 10;
+	int size = 10;
 	
-	public mcCPU(int c,int s){
+	public mcCPU(int c){
 		color = c;
-		size = s;
 	}
 	
 	int[] decide(GameState state){
@@ -21,11 +20,11 @@ public class mcCPU {
 		ArrayList<int[]> array = new ArrayList<int[]>();
 		
 		//盤面の空マスを置けるかチェック
-		for(int y=1; y<size + 2; y++){
-			for(int x=1; x<size + 2; x++){
+		for(int y=1; y<size; y++){
+			for(int x=1; x<size; x++){
 				
 				//すでに駒があるときはパス
-				if(state.data[x][y] != 0)
+				if(state.data[x + y * size] != 0)
 					continue;
 				
 				//置けるマスのとき、候補として記憶
@@ -72,21 +71,6 @@ public class mcCPU {
 		//System.out.println(point[j]);
 		return array.get(j);
 		
-		/*
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
-		
-		/*
-		//ランダムクラス内のnextIntメソッドを利用し乱数を作成
-		nextInt(x);
-		0からxまでが乱数が取る可能性がある値
-		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
-		
-		int index = rnd.nextInt(array.size());
-		
-		//乱数で選ばれた置ける場所を返す
-		return array.get(index);
-		*/
-}
+	}
 	
 }

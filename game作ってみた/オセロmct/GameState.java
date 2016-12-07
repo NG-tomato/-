@@ -15,7 +15,7 @@ public class GameState extends Observable{
 	black 黒の個数
 	white 白の個数
 	*/
-	int data[][];
+	int data[];
 	int turn;
 	int player;
 	int black;
@@ -23,20 +23,24 @@ public class GameState extends Observable{
 	int size;
 	
 	//最初の状態を作るメソッド
-	public GameState(int s){
-		size = s;
+	public GameState(){
+		size = 10;
+		int x = size/2;
+		int y = size/2;
 		//初期値（真ん中の４つが交互にある状態）を作成
-		data = new int[size + 2][size + 2];
-		data[size/2][size/2] = 1;
-		data[size/2][size/2 + 1] = -1;
-		data[size/2 + 1][size/2] = -1;
-		data[size/2 + 1][size/2 + 1] = 1;
+		//dataは1列の配列内に保存
+		//位置は[x+y*10]として入れる
+		data = new int[size * size];
+		data[x + y * 10] = 1;
+		data[x + (y - 1) * 10] = -1;
+		data[x - 1 + y * 10] = -1;
+		data[x -1 + (y - 1) * 10] = 1;
 		//壁を作成
-		for(int i = 0;i < size + 1; i++){
-			data[0][i] = 2;
-			data[size + 1][i + 1] = 2;
-			data[i + 1][0] = 2;
-			data[i][size + 1] = 2;
+		for(int i = 0;i < size - 1; i++){
+			data[i * 10] = 2;
+			data[size - 1 + (i + 1) * 10] = 2;
+			data[i + 1] = 2;
+			data[i + (size - 1) * 10] = 2;
 		}
 		turn = 0;
 		player = 1;
@@ -50,7 +54,7 @@ public class GameState extends Observable{
 	*/
 	public boolean put(int x, int y){
 		//すでに駒があるところには置けない
-		if(data[x][y] != 0){
+		if(data[x + y * 10] != 0){
 			return false;
 		}
 		//リバースできないところには置けない
@@ -60,7 +64,7 @@ public class GameState extends Observable{
 		}
 		
 		//駒を置く
-		data[x][y] = player;
+		data[x + y * 10] = player;
 		player *= -1;
 		turn++;
 		countDisc();
@@ -107,7 +111,7 @@ public class GameState extends Observable{
 			*/
 			
 			//隣のマスの値を取得
-			int nextState =data[x0][y0];
+			int nextState =data[x0 + y0 * 10];
 			
 			//隣のマスの駒が現在のturnのplayerの駒である場合、その方向の走査を終了して次の方向へ移る
 			if(nextState == player){
@@ -121,9 +125,11 @@ public class GameState extends Observable{
 				continue;
 			}
 			//それ以外(隣のマスが現在のturnのplayerの駒でない駒の場合)、その方向の走査を続ける
+			/*
 			else{
 				//System.out.println("Next state is enemy: " +x0 +","+ y0);
 			}
+			*/
 			
 			//隣の隣から端まで走査して、自分の色があればリバース
 			
@@ -143,7 +149,7 @@ public class GameState extends Observable{
 				*/
 				
 				//自分の駒がある場合
-				if(data[x1][y1]==player){
+				if(data[x1 + y1 * 10]==player){
 					//System.out.println("Player cell!: " +x1 +","+ y1);
 					
 					//doReverseがtrueの場合（置き換える処理の場合）置き換える
@@ -156,7 +162,7 @@ public class GameState extends Observable{
 							int x2 = x + (dir[i][0]*k);
 							int y2 = y + (dir[i][1]*k);
 							//駒の変更
-							data[x2][y2] *= -1;
+							data[x2 + y2 * 10] *= -1;
 							//置き換わった駒を表示する
 							//System.out.println("reverse: " +x2 +","+ y2);
 						}
@@ -167,7 +173,7 @@ public class GameState extends Observable{
 					break;
 				}
 				//空白があるまたは壁に到達したら終了
-				if(data[x1][y1] == 2 || data[x1][y1]==0){
+				if(data[x1 + y1 * 10] == 2 || data[x1 + y1 * 10] == 0){
 					break;
 				}
 				
@@ -198,11 +204,11 @@ public class GameState extends Observable{
 	public boolean checkPass(){
 		
 		//コピーデータの全升目に対して、リバースできるかチェック
-		for(int y=1; y<size+2; y++){
-			for(int x=1; x<size+2; x++){
+		for(int y=1; y<size; y++){
+			for(int x=1; x<size; x++){
 				
 				//すでに駒があるところはチェックせずスキップする
-				if(data[x][y] != 0){
+				if(data[x + y * 10] != 0){
 					continue;
 				}
 				
@@ -225,11 +231,11 @@ public class GameState extends Observable{
 		black = 0;
 		white = 0;
 		
-		for(int y=1; y<size+2; y++){
-			for(int x=1; x<size+2; x++){
-				if(data[x][y] == 1){
+		for(int y=1; y<size; y++){
+			for(int x=1; x<size; x++){
+				if(data[x + y * 10] == 1){
 					black++;
-				}else if(data[x][y] == -1){
+				}else if(data[x + y * 10] == -1){
 					white++;
 				}
 			}
@@ -247,32 +253,32 @@ public class GameState extends Observable{
 	
 	//初期状態に戻すメソッド
 	public void reset(){
-		data = new int[size + 2][size + 2];
-		data[size/2][size/2] = 1;
-		data[size/2][size/2 + 1] = -1;
-		data[size/2 + 1][size/2] = -1;
-		data[size/2 + 1][size/2 + 1] = 1;
+		size = 10;
+		int x = size/2;
+		int y = size/2;
+		//初期値（真ん中の４つが交互にある状態）を作成
+		//dataは1列の配列内に保存
+		//位置は[x+y*10]として入れる
+		data = new int[size * size];
+		data[x + y * 10] = 1;
+		data[x + (y - 1) * 10] = -1;
+		data[x - 1 + y * 10] = -1;
+		data[x -1 + (y-1) * 10] = 1;
 		//壁を作成
-		for(int i = 0;i < size + 1; i++){
-			data[0][i] = 2;
-			data[size + 1][i + 1] = 2;
-			data[i + 1][0] = 2;
-			data[i][size + 1] = 2;
+		for(int i = 0;i < size - 1; i++){
+			data[i * 10] = 2;
+			data[size - 1 + (i + 1) * 10] = 2;
+			data[i + 1] = 2;
+			data[i + (size - 1) * 10] = 2;
 		}
 		turn = 0;
 		player = 1;
 		black = 2;
 		white = 2;
-		
 	}
 	
-	public void set(int[][] d, int t, int p){
-		for(int i = 1;i < size + 1; i++){
-			for(int j = 1;j < size + 1; j++){
-				data[i][j] = d[i][j];
-			}
-		}
-		
+	public void set(int[] d, int t, int p){
+		data = Arrays.copyOf(d ,d.length);
 		
 		turn = t;
 		player = p;

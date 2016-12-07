@@ -34,14 +34,14 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	static final int H = SIZE * Squares;
 	
 	//状態を表すクラスstateを作成
-	GameState state = new GameState(Squares);
+	GameState state = new GameState();
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	RandomCPU w_cpu = new RandomCPU(-1);
 	//black
-	mcCPU b_cpu = new mcCPU(1, Squares);
-	
+	mcCPU b_cpu = new mcCPU(1);
+	//RandomCPU b_cpu = new RandomCPU(1);	
 	//メインパネルを作成するメソッド
 	public MainPanel2(){
 		
@@ -112,7 +112,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 		//ゲームの状態を示すstateクラスのdataメソッドを左上から順番に探索していくことで、駒が置いてある場所と黒か白かを検知する
 		for(int y=1; y < Squares + 2; y++){
 			for(int x=1; x < Squares + 2; x++){
-				if(state.data[x][y] == 1){
+				if(state.data[x + y * 10] == 1){
 					//黒の駒を表示
 					g.setColor(Color.BLACK);
 					/*
@@ -121,7 +121,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 					点(x, y)を左上隅とする幅w、高さhの長方形に内接する楕円を描く
 					*/
 					g.fillOval((x-1)*SIZE, (y-1)*SIZE, SIZE, SIZE);
-				}else if(state.data[x][y] == -1){
+				}else if(state.data[x + y * 10] == -1){
 					//白の駒を表示
 					g.setColor(Color.WHITE);
 					g.fillOval((x-1)*SIZE, (y-1)*SIZE, SIZE, SIZE);

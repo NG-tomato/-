@@ -14,19 +14,18 @@ Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
 public class MainPanel{
 	//縦横のマス
-	int Squares = 8;
 	
 	//状態を表すクラスstateを作成
-	GameState state = new GameState(Squares);
+	GameState state = new GameState();
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	mcCPU b_cpu = new mcCPU(1,Squares);
+	mcCPU b_cpu = new mcCPU(1);
 	//white
 	/*
-	mcCPU w_cpu = new mcCPU(-1, Squares);
+	mcCPU w_cpu = new mcCPU(-1);
 	*/
-	RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	RandomCPU w_cpu = new RandomCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
@@ -67,13 +66,13 @@ public class MainPanel{
 		System.out.println();
 		
 		//左上から順にマスと駒を表示
-		for(int y=1; y<Squares + 1; y++){
-			for(int x=1; x<Squares + 1; x++){
+		for(int y=1; y<10 + 1; y++){
+			for(int x=1; x<10 + 1; x++){
 				System.out.print("|");
-				if(state.data[x][y] == 1){
+				if(state.data[x + y * 10] == 1){
 					//黒の駒を表示
 					System.out.print("○");
-				}else if(state.data[x][y] == -1){
+				}else if(state.data[x + y * 10] == -1){
 					//白の駒を表示
 					System.out.print("●");
 				}else{
@@ -110,7 +109,7 @@ public class MainPanel{
 					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
 				}
 				/*盤面が埋まったら終了
-				if(state.turn == (Squares * Squares) - 4){
+				if(state.turn == (10 * 10) - 4){
 					TextDisplay();
 					EndGame();
 				}*/
@@ -126,7 +125,7 @@ public class MainPanel{
 				}
 				
 				/*盤面が埋まったら終了
-				if(state.turn == (Squares * Squares) - 4){
+				if(state.turn == (10 * 10) - 4){
 					TextDisplay();
 					EndGame();
 				}*/

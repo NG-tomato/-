@@ -13,29 +13,28 @@ MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
 public class mcMainPanel{
-	//縦横のマス
-	int Squares = 8;
+	int size = 10;
 	
 	//状態を表すクラスstateを作成
-	GameState state = new GameState(Squares);
+	GameState state = new GameState();
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	RandomCPU b_cpu = new RandomCPU(1,Squares);
+	RandomCPU b_cpu = new RandomCPU(1);
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1, Squares);
+	RandomCPU w_cpu = new RandomCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
-	int s_data[][] = new int[Squares + 2][Squares + 2];
+	int s_data[] = new int[size * size];
 	int count;
 	int turn;
 	int player;
 	
 	int bbb;
 	//メインパネルを作成するメソッド
-	public mcMainPanel(int c, int[][] d, int t, int p){
+	public mcMainPanel(int c, int[] d, int t, int p){
 		//CPUを選択
 		/*
 		//ランダムで打つAIのクラスRandomCPUを作成
@@ -50,9 +49,9 @@ public class mcMainPanel{
 		
 		count = c;
 		//System.arraycopy(d, 0, s_data, 0, d.length);
-		for(int i = 0;i < Squares + 2; i++){
-			for(int j = 0;j < Squares + 2; j++){
-				s_data[i][j] = d[i][j];
+		for(int i = 0;i < size; i++){
+			for(int j = 0;j < size; j++){
+				s_data[i + j * size] = d[i + j * size];
 			}
 		}
 
@@ -101,13 +100,13 @@ public class mcMainPanel{
 		System.out.println();
 		
 		//左上から順にマスと駒を表示
-		for(int y=1; y<Squares + 1; y++){
-			for(int x=1; x<Squares + 1; x++){
+		for(int y=1; y<size - 1; y++){
+			for(int x=1; x<size - 1; x++){
 				System.out.print("|");
-				if(state.data[x][y] == 1){
+				if(state.data[x + y * size] == 1){
 					//黒の駒を表示
 					System.out.print("○");
-				}else if(state.data[x][y] == -1){
+				}else if(state.data[x + y * size] == -1){
 					//白の駒を表示
 					System.out.print("●");
 				}else{
@@ -144,7 +143,7 @@ public class mcMainPanel{
 					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
 				}
 				/*盤面が埋まったら終了
-				if(state.turn == (Squares * Squares) - 4){
+				if(state.turn == (size-2) * (size-2) - 4){
 					TextDisplay();
 					EndGame();
 				}*/
@@ -160,7 +159,7 @@ public class mcMainPanel{
 				}
 				
 				/*盤面が埋まったら終了
-				if(state.turn == (Squares * Squares) - 4){
+				if(state.turn == (size * size) - 4){
 					TextDisplay();
 					EndGame();
 				}*/

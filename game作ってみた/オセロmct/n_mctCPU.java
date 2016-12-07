@@ -4,11 +4,12 @@ public class n_mctCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
-	int size;
+	int size = 10;
 	
-	public n_mctCPU(int c,int s){
+	int count = 10;
+	
+	public n_mctCPU(int c){
 		color = c;
-		size = s;
 	}
 	
 	int[] decide(GameState state){
@@ -21,7 +22,7 @@ public class n_mctCPU {
 			for(int x=1; x<size + 2; x++){
 				
 				//すでに駒があるときはパス
-				if(state.data[x][y] != 0)
+				if(state.data[x + y * 10] != 0)
 					continue;
 				
 				//置けるマスのとき、候補として記憶
