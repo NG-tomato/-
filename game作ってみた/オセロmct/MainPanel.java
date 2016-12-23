@@ -21,11 +21,11 @@ public class MainPanel{
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
 	mcCPU b_cpu = new mcCPU(1);
+	//RandomCPU b_cpu = new RandomCPU(1);
+	
 	//white
-	/*
 	mcCPU w_cpu = new mcCPU(-1);
-	*/
-	RandomCPU w_cpu = new RandomCPU(-1);
+	//RandomCPU w_cpu = new RandomCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];

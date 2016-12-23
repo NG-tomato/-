@@ -57,7 +57,9 @@ public class mcCPU {
 		
 		for(int i=0; i < array.size(); i++){
 			int a[] = array.get(i);
-			p.mcGame(a);
+			for(int j = 0; j < count;j++){
+				p.mcGame(a);
+			}
 			point[i] = p.rePoint(state.player);
 		}
 		

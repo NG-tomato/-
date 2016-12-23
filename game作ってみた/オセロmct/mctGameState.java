@@ -2,7 +2,7 @@ import java.util.*;
 import java.util.Arrays;
 
 //Observableを継承することで、updateメソッドなどの監視対象となるクラスとなる
-public class GameState extends Observable{
+public class mctGameState extends Observable{
 //public class GameState{
 
 	/*
@@ -23,7 +23,7 @@ public class GameState extends Observable{
 	int size;
 	
 	//最初の状態を作るメソッド
-	public GameState(){
+	public mctGameState(){
 		size = 10;
 		int x = size/2;
 		int y = size/2;

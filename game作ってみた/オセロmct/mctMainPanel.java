@@ -12,7 +12,7 @@ implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある
 MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
-public class mcMainPanel{
+public class mctMainPanel{
 	int size = 10;
 	
 	//状態を表すクラスstateを作成
@@ -34,7 +34,7 @@ public class mcMainPanel{
 	
 	int bbb;
 	//メインパネルを作成するメソッド
-	public mcMainPanel(int c, int[] d, int t, int p){
+	public mctMainPanel(int c, int[] d, int t, int p){
 		//CPUを選択
 		/*
 		//ランダムで打つAIのクラスRandomCPUを作成

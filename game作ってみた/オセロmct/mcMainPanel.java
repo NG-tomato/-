@@ -66,12 +66,12 @@ public class mcMainPanel{
 	
 	public void mcGame(int[] put){
 		
-		for(int i = 0; i < count; i++){
+		//for(int i = 0; i < count; i++){
 			//TextDisplay();
 			state.set(s_data, turn, player);
 			state.put(put[0], put[1]);
 			Game();
-		}
+		//}
 	}
 	
 	
