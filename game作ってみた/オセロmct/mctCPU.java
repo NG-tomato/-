@@ -8,6 +8,12 @@ public class mctCPU {
 	
 	int count = 10;
 	
+	//mapに入れるデータの配列
+	//{プレイアウト数,勝数,ポイント}
+	int[] data = new int[3];
+	//データを入れる配列
+	Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+	
 	public mctCPU(int c){
 		color = c;
 	}
@@ -29,7 +35,7 @@ public class mctCPU {
 				if(state.canReverse(x, y) == true){
 					
 					//[x,y]の2つの要素を持つ配列として記憶する
-					int pos[] = {x,y};
+					int pos[] = {x,y,0};
 					
 					//[x,y]の配列を置ける場所を記憶するリストに追加する
 					array.add(pos);
@@ -47,8 +53,6 @@ public class mctCPU {
 		
 		mcMainPanel p = new mcMainPanel(count, state.data , state.turn, state.player);
 		
-		//p.TextDisplay();
-		//System.out.println(Arrays.deepToString(state.data));
 		
 		//それぞれの手の点数を保存する配列
 		int[] point = new int[array.size()];
@@ -69,20 +73,5 @@ public class mctCPU {
 		//System.out.println(point[j]);
 		return array.get(j);
 		
-		/*
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
-		
-		/*
-		//ランダムクラス内のnextIntメソッドを利用し乱数を作成
-		nextInt(x);
-		0からxまでが乱数が取る可能性がある値
-		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
-		
-		int index = rnd.nextInt(array.size());
-		
-		//乱数で選ばれた置ける場所を返す
-		return array.get(index);
-		*/
 	}
 }
