@@ -2,8 +2,7 @@ import java.util.*;
 import java.util.Arrays;
 
 //Observableを継承することで、updateメソッドなどの監視対象となるクラスとなる
-public class mctGameState extends Observable{
-//public class GameState{
+public class mctGameState{
 
 	/*
 	状態として保持するデータ
@@ -21,6 +20,9 @@ public class mctGameState extends Observable{
 	int black;
 	int white;
 	int size;
+	
+	//ゾブリストハッシュを作るクラスを作成
+	zobrist zob = new zobrist();
 	
 	//最初の状態を作るメソッド
 	public mctGameState(){
@@ -46,6 +48,8 @@ public class mctGameState extends Observable{
 		player = 1;
 		black = 2;
 		white = 2;
+		
+		zob.makeZob(data, player);
 	}
 		
 	/*
@@ -65,12 +69,13 @@ public class mctGameState extends Observable{
 		
 		//駒を置く
 		data[x + y * 10] = player;
+		zob.put(x, y, player);
+		
 		player *= -1;
+		zob.color();
+		
 		turn++;
 		countDisc();
-		
-		setChanged();
-		notifyObservers();
 		
 		return true;
 	}
@@ -103,33 +108,14 @@ public class mctGameState extends Observable{
 			int x0 = x+dir[i][0];
 			int y0 = y+dir[i][1];
 			
-			/*
-			//確かめるマスがマスの範囲外である場合その方向の走査を終了させて次の方向へ移る
-			if(isOut(x0,y0) == true){
-				continue;
-			}
-			*/
-			
 			//隣のマスの値を取得
 			int nextState =data[x0 + y0 * 10];
 			
-			//隣のマスの駒が現在のturnのplayerの駒である場合、その方向の走査を終了して次の方向へ移る
-			if(nextState == player){
-				//走査した方向の隣の駒を表示する
-				//System.out.println("Next state is player: " +x0 +","+ y0);
+			//隣のマスの駒が何も置かれていない場合または壁の場合、現在のturnのplayerの駒である場合、その方向の走査を終了して次の方向へ移る
+			if(nextState == player || nextState == 0 || nextState == 2){
 				continue;
 			}
-			//隣のマスに何も置かれていない場合または壁の場合、その方向の走査を終了して次の方向へ移る
-			else if(nextState == 0 || nextState == 2){
-				//System.out.println("Next state is null: " +x0 +","+ y0);
-				continue;
-			}
-			//それ以外(隣のマスが現在のturnのplayerの駒でない駒の場合)、その方向の走査を続ける
-			/*
-			else{
-				//System.out.println("Next state is enemy: " +x0 +","+ y0);
-			}
-			*/
+			
 			
 			//隣の隣から端まで走査して、自分の色があればリバース
 			
@@ -140,13 +126,6 @@ public class mctGameState extends Observable{
 				//変数jと方向の関数を掛けることで、駒を置く位置に対しての座標が分かるため、それを駒を置く座標に対して加えることで、もとの状態における位置を指定する
 				int x1 = x + (dir[i][0]*j);
 				int y1 = y + (dir[i][1]*j);
-				
-				/*
-				//確かめるマスがマスの範囲外である場合その方向の走査を終了させて次の方向へ移る
-				if(isOut(x1,y1) == true){
-					break;
-				}
-				*/
 				
 				//自分の駒がある場合
 				if(data[x1 + y1 * 10]==player){
@@ -161,10 +140,10 @@ public class mctGameState extends Observable{
 							//マス指定
 							int x2 = x + (dir[i][0]*k);
 							int y2 = y + (dir[i][1]*k);
+							int enemy_player = player * -1;
 							//駒の変更
+							zob.put(x2, y2, enemy_player);
 							data[x2 + y2 * 10] *= -1;
-							//置き換わった駒を表示する
-							//System.out.println("reverse: " +x2 +","+ y2);
 						}
 					}
 					//置くことにより変わる駒があるので、置けるマスがあると判断し、reversed変数をtrueにする
@@ -191,6 +170,7 @@ public class mctGameState extends Observable{
 	public boolean canReverse(int x, int y){
 		return reverse(x, y, false);
 	}
+	
 	
 	//指定されたマスがマス内か確かめるメソッド
 	public boolean isOut(int x, int y){
@@ -275,6 +255,7 @@ public class mctGameState extends Observable{
 		player = 1;
 		black = 2;
 		white = 2;
+		zob.makeZob(data, player);
 	}
 	
 	public void set(int[] d, int t, int p){
@@ -283,5 +264,6 @@ public class mctGameState extends Observable{
 		turn = t;
 		player = p;
 		countDisc();
+		zob.makeZob(data, player);
 	}
 }

@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class n_mctCPU {
+public class mct_RandomCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
@@ -8,11 +8,14 @@ public class n_mctCPU {
 	
 	int count = 10;
 	
-	public n_mctCPU(int c){
+	public mct_RandomCPU(int c){
 		color = c;
 	}
 	
-	int[] decide(GameState state){
+	int[] decide(mctGameState state){
+		
+		mcMainPanel p = new mcMainPanel(count, state.data , state.turn, state.player);
+
 		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
@@ -45,7 +48,6 @@ public class n_mctCPU {
 			return pos;
 		}
 		
-		mcMainPanel p = new mcMainPanel(count, state.data , state.turn, state.player);
 		
 		//p.TextDisplay();
 		//System.out.println(Arrays.deepToString(state.data));

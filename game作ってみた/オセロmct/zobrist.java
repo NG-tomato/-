@@ -19,6 +19,7 @@ public class zobrist {
 			white[i] = rnd.nextInt();
 		}
 	}
+	
 	//その時点でのゾブリストハッシュの値を作る関数
 	public void makeZob(int[] state, int c){
 		for(int i = 0;i < 8;i++){

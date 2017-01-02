@@ -16,13 +16,13 @@ public class mctMainPanel{
 	int size = 10;
 	
 	//状態を表すクラスstateを作成
-	GameState state = new GameState();
+	mctGameState state = new mctGameState();
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	RandomCPU b_cpu = new RandomCPU(1);
+	mct_RandomCPU b_cpu = new mct_RandomCPU(1);
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1);
+	mct_RandomCPU w_cpu = new mct_RandomCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
@@ -35,44 +35,25 @@ public class mctMainPanel{
 	int bbb;
 	//メインパネルを作成するメソッド
 	public mctMainPanel(int c, int[] d, int t, int p){
-		//CPUを選択
-		/*
-		//ランダムで打つAIのクラスRandomCPUを作成
-		//black
-		if(B_CPU == 1){
-		}
-		//ランダムで打つAIのクラスRandomCPUを作成
-		//white
-		if(W_CPU == 1){
-		}
-		*/
 		
 		count = c;
-		//System.arraycopy(d, 0, s_data, 0, d.length);
 		s_data = Arrays.copyOf(d ,d.length);
 
 		turn = t;
 		player = p;
 		
-		
-		/*
-		for(int i = 0; i < count; i++){
-			//TextDisplay();
-			Game();
-			state.reset();
-		}
-		*/
+		state.zob.makeZob(s_data, player);
 	}
 	
 	public void mcGame(int[] put){
 		
 		for(int i = 0; i < count; i++){
-			//TextDisplay();
 			state.set(s_data, turn, player);
 			state.put(put[0], put[1]);
 			Game();
 		}
 	}
+	
 	
 	
 	public int rePoint(int p){
@@ -88,40 +69,7 @@ public class mctMainPanel{
 		
 		return point;
 	}
-	
-	//描写を行うメソッド
-	public void TextDisplay(){
-				
 		
-		System.out.println();
-		
-		//左上から順にマスと駒を表示
-		for(int y=1; y<size - 1; y++){
-			for(int x=1; x<size - 1; x++){
-				System.out.print("|");
-				if(state.data[x + y * size] == 1){
-					//黒の駒を表示
-					System.out.print("○");
-				}else if(state.data[x + y * size] == -1){
-					//白の駒を表示
-					System.out.print("●");
-				}else{
-					System.out.print("  ");
-				}
-			}
-			System.out.println("|");
-		}
-		
-		
-		System.out.println();
-		
-		System.out.println("TURN = "+state.turn);
-		System.out.println("PLAYER = "+state.player);
-		System.out.println("DISC = "+state.black+" : " +state.white);
-		System.out.println("\n \n");
-		
-	}
-	
 	
 	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
@@ -136,13 +84,7 @@ public class mctMainPanel{
 				//座標が以外で置ける場所がある場合のみ駒を置く処理をする
 				if(b_action[0] != -1){
 					state.put(b_action[0], b_action[1]);
-					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
 				}
-				/*盤面が埋まったら終了
-				if(state.turn == (size-2) * (size-2) - 4){
-					TextDisplay();
-					EndGame();
-				}*/
 			}
 			else if(state.player == w_cpu.color){
 				//cpu内のdecideメソッドで置く場所を決定
@@ -151,16 +93,9 @@ public class mctMainPanel{
 				//置ける場所がある場合のみ駒を置く処理をする
 				if(w_action[0] != -1){
 					state.put(w_action[0], w_action[1]);
-					//System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
 				}
 				
-				/*盤面が埋まったら終了
-				if(state.turn == (size * size) - 4){
-					TextDisplay();
-					EndGame();
-				}*/
 			}
-			//TextDisplay();
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;
@@ -169,7 +104,6 @@ public class mctMainPanel{
 					EndGame();
 					break;
 				}
-				//System.out.println("Pass! Next turn is : "+state.player);
 			}
 		}
 	}
@@ -177,19 +111,22 @@ public class mctMainPanel{
 	
 	public void EndGame(){
 		bbb ++;
-		//System.out.println("---Game END---");
 		int End = state.Win();
-		//String Winner;
 		if(End == 1){
-		//	Winner = "black";
 			winCount[0] ++;
 		}else if(End == -1){
-		//	Winner = "white";
 			winCount[1] ++;
 		}else {
-		//	Winner = "Drow";
 			winCount[2] ++;
 		}
-		//System.out.println(Winner + " Win !");
+	}
+	
+	public int reverseZob(int x,int y){
+		int zobrist = 0;
+		if(state.put(x, y)==true){
+			zobrist = state.zob.zobrist;
+			state.set(s_data, turn, player);
+		}
+		return zobrist;
 	}
 }

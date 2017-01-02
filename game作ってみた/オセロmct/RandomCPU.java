@@ -6,6 +6,9 @@ public class RandomCPU {
 	int color;	//BLACK or WHITE
 	int size = 10;
 	
+	//ランダムクラスのインスタンス化
+	Random rnd = new Random();
+	
 	public RandomCPU(int c){
 		color = c;
 	}
@@ -44,8 +47,6 @@ public class RandomCPU {
 			return pos;
 		}
 		
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
 		
 		/*
 		ランダムクラス内のnextIntメソッドを利用し乱数を作成
