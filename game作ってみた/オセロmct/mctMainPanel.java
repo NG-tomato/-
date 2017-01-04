@@ -54,6 +54,11 @@ public class mctMainPanel{
 		}
 	}
 	
+	public int mctGame(){
+		Game();
+		return state.Win();
+	}
+	
 	
 	
 	public int rePoint(int p){
