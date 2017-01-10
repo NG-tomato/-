@@ -80,6 +80,12 @@ public class mctGameState{
 		return true;
 	}
 	
+	//パスのときの処理
+	public void pass(){
+		player *= -1;
+		zob.color();
+	}
+	
 	/*
 	置けるかどうか確かめる変数
 	x,y 確かめる位置の座標

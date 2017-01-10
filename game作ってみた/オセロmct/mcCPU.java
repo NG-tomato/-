@@ -3,25 +3,30 @@ import java.util.*;
 public class mcCPU {
 	
 	//自分が置くターンを判別する関数
-	int color;	//BLACK or WHITE
+	int color;
 	
 	
 	//プレイアウト数
 	int count = 10;
+	
+	//盤の大きさ(壁のところも含めて)
 	int size = 10;
 	
+	//プレイヤを作るときにどっちの色のプレイヤかも指定する
 	public mcCPU(int c){
 		color = c;
 	}
 	
+	//石を打つときにどこに打つかきめるメソッド
+	//現在の状態(GameStateクラス)を引数にとる
 	int[] decide(GameState state){
 		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
 		
 		//盤面の空マスを置けるかチェック
-		for(int y=1; y<size; y++){
-			for(int x=1; x<size; x++){
+		for(int y=1; y< size-1; y++){
+			for(int x=1; x<size-1; x++){
 				
 				//すでに駒があるときはパス
 				if(state.data[x + y * size] != 0)
