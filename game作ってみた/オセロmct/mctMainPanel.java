@@ -1,18 +1,13 @@
 //表示させるパネルを作成するクラス
 
 
-
 //共通の処理のメソッド(日時機能、国際化、乱数ジェネレータ)を集めたクラス（ユーティリティクラス）
 import java.util.*;
 
-/*
-パネル作成を行うクラスを継承
-implements で受け取るイベントを実装する
-implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある(ないとエラーになる)ため、共通の規格として扱える
-MouseListener はマウスイベントを受け取るクラス
-Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
-*/
+
+//mct用のメインパネルクラス
 public class mctMainPanel{
+	//パネルのサイズ
 	int size = 10;
 	
 	//状態を表すクラスstateを作成
@@ -27,16 +22,18 @@ public class mctMainPanel{
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
+	//stateの情報をリセットするときに使うデータを保存する変数
+	//盤面のデータ
 	int s_data[] = new int[size * size];
-	int count;
+	//ターン
 	int turn;
 	int player;
 	
+	//
 	int bbb;
 	//メインパネルを作成するメソッド
-	public mctMainPanel(int c, int[] d, int t, int p){
+	public mctMainPanel(int[] d, int t, int p){
 		
-		count = c;
 		s_data = Arrays.copyOf(d ,d.length);
 
 		turn = t;
@@ -45,14 +42,6 @@ public class mctMainPanel{
 		state.zob.makeZob(s_data, player);
 	}
 	
-	public void mcGame(int[] put){
-		
-		for(int i = 0; i < count; i++){
-			state.set(s_data, turn, player);
-			state.put(put[0], put[1]);
-			Game();
-		}
-	}
 	
 	public int mctGame(){
 		Game();

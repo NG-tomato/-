@@ -40,7 +40,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	//white
 	RandomCPU w_cpu = new RandomCPU(-1);
 	//black
-	mcCPU b_cpu = new mcCPU(1);
+	mctCPU b_cpu = new mctCPU(1);
 	//RandomCPU b_cpu = new RandomCPU(1);	
 	//メインパネルを作成するメソッド
 	public MainPanel2(){

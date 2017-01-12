@@ -21,6 +21,7 @@ public class zobrist {
 	}
 	
 	//その時点でのゾブリストハッシュの値を作る関数
+	//現状態の盤面のところから、
 	public void makeZob(int[] state, int c){
 		for(int i = 0;i < 8;i++){
 			for(int j = 0;j < 8;j++){
@@ -40,17 +41,21 @@ public class zobrist {
 	//置かれた際の1つの石の状態が変化したことを表す変数
 	//石を置く動作と一緒に繰り返させる
 	public void put(int x, int y, int c){
+		//白が黒に変わったとき、その場所の白の値の排他的論理和を取ることで値を戻し、黒の値の排他的論理和をとる
 		if(c == 1){
 			zobrist = zobrist ^ white[x + y * 8];
 			zobrist = zobrist ^ black[x + y * 8];
-		}else if(c == -1){
+		}
+		//黒が白に変わったとき、その場所の黒の値の排他的論理和をとることで値を戻し、白の値の排他的論理和をとる
+		else if(c == -1){
 			zobrist = zobrist ^ black[x + y * 8];
 			zobrist = zobrist ^ white[x + y * 8];
 		}
 	}
-	//駒を置く動作を行った後に手順の情報を入れる変数
+	//駒を置く動作を行った後に手順の情報を入れるメソッド
 	//石を置き終わった後に行う
 	public void color(){
+		//ゾブリストハッシュの値を反転させる
 			zobrist = ~ zobrist;
 	}
 	

@@ -35,7 +35,7 @@ public class mctCPU {
 	int[] decide(GameState state){
 		
 		
-		mctMainPanel p = new mctMainPanel(count, state.data , state.turn, state.player);
+		mctMainPanel p = new mctMainPanel(state.data , state.turn, state.player);
 		
 		
 		//置ける場所を記憶するリスト

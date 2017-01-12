@@ -6,7 +6,8 @@ public class mct_RandomCPU {
 	int color;	//BLACK or WHITE
 	int size = 10;
 	
-	int count = 10;
+	//ランダムクラスのインスタンス化
+	Random rnd = new Random();
 	
 	public mct_RandomCPU(int c){
 		color = c;
@@ -14,15 +15,12 @@ public class mct_RandomCPU {
 	
 	int[] decide(mctGameState state){
 		
-		mcMainPanel p = new mcMainPanel(count, state.data , state.turn, state.player);
-
-		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
 		
 		//盤面の空マスを置けるかチェック
-		for(int y=1; y<size + 2; y++){
-			for(int x=1; x<size + 2; x++){
+		for(int y=1; y<size; y++){
+			for(int x=1; x<size; x++){
 				
 				//すでに駒があるときはパス
 				if(state.data[x + y * 10] != 0)
@@ -41,6 +39,7 @@ public class mct_RandomCPU {
 			}
 		}
 		
+		//ランダム選択
 		
 		//置ける場所がない場合は座標が{-1,-1}として返す
 		if(array.size() <= 0){
@@ -49,27 +48,15 @@ public class mct_RandomCPU {
 		}
 		
 		
-		//p.TextDisplay();
-		//System.out.println(Arrays.deepToString(state.data));
+		/*
+		ランダムクラス内のnextIntメソッドを利用し乱数を作成
+		nextInt(x);
+		0からxまでが乱数が取る可能性がある値
+		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
+		*/
+		int index = rnd.nextInt(array.size());
 		
-		//それぞれの手の点数を保存する配列
-		int[] point = new int[array.size()];
-		
-		for(int i=0; i < array.size(); i++){
-			int a[] = array.get(i);
-			p.mcGame(a);
-			point[i] = p.rePoint(state.player);
-		}
-		
-		//ポイントが最大の手を求める
-		int j = 0;
-		for(int i = 1; i < array.size(); i++){
-			if(point[i] > point[j]){
-				j = i;
-			}
-		}
-		//System.out.println(point[j]);
-		return array.get(j);
-		
+		//乱数で選ばれた置ける場所を返す
+		return array.get(index);
 	}
 }
