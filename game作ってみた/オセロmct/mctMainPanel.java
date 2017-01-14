@@ -1,4 +1,4 @@
-//表示させるパネルを作成するクラス
+//パネルを作成するクラス
 
 
 //共通の処理のメソッド(日時機能、国際化、乱数ジェネレータ)を集めたクラス（ユーティリティクラス）
@@ -29,43 +29,30 @@ public class mctMainPanel{
 	int turn;
 	int player;
 	
-	//
-	int bbb;
+	//プレイアウトの回数をカウントする変数
+	int game_count;
+	
+	
 	//メインパネルを作成するメソッド
 	public mctMainPanel(int[] d, int t, int p){
-		
+		//リセットを行うときに使用するためのデータを保存する
 		s_data = Arrays.copyOf(d ,d.length);
-
 		turn = t;
 		player = p;
 		
+		//現在の状態のゾブリストハッシュの値を作る
 		state.zob.makeZob(s_data, player);
 	}
 	
-	
+	//mct用のプレイアウトを行うメソッド
+	//1回プレイアウトを行うごとにそのプレイアウトの結果を返す
 	public int mctGame(){
 		Game();
 		return state.Win();
 	}
 	
 	
-	
-	public int rePoint(int p){
-		int point = 0;
-		
-		if(p == 1){
-			point = winCount[0];
-		}else{
-			point = winCount[1];
-		}
-		
-		winCount = new int[3];
-		
-		return point;
-	}
-		
-	
-	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
+	//プレイアウトをゲーム終了（ゲーム終了）まで行うクラス
 	public void Game(){
 		
 		for(;;){
@@ -95,28 +82,17 @@ public class mctMainPanel{
 				state.player *= -1;
 				//両方パスだと終了
 				if(state.checkPass() == true){
-					EndGame();
 					break;
 				}
 			}
 		}
 	}
 	
-	
-	public void EndGame(){
-		bbb ++;
-		int End = state.Win();
-		if(End == 1){
-			winCount[0] ++;
-		}else if(End == -1){
-			winCount[1] ++;
-		}else {
-			winCount[2] ++;
-		}
-	}
-	
+	//(x,y)に石を打ったときのゾブリストの値を返す変数
+	//打てない時は0を返す
 	public int reverseZob(int x,int y){
 		int zobrist = 0;
+		//打てるとき
 		if(state.put(x, y)==true){
 			zobrist = state.zob.zobrist;
 			state.set(s_data, turn, player);

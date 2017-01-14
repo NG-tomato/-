@@ -1,12 +1,12 @@
 import java.util.*;
 import java.util.Arrays;
 
-//Observableを継承することで、updateメソッドなどの監視対象となるクラスとなる
+//mctで探索中の状態を保存するクラス
 public class mctGameState{
 
 	/*
 	状態として保持するデータ
-	data 現在の駒が置かれている場所を保持する縦と横の多次元配列
+	data 現在の石が置かれている場所を保持する縦と横の多次元配列
 		0が置かれていない場所 1が黒 -1が白 を表す
 	turn 何ターン目か示す変数 全部置かれた場合のターン数は60なのでその場合はそこで終了する（Mainpanel内にある）
 	player どちらのターンかを示す変数
@@ -49,15 +49,16 @@ public class mctGameState{
 		black = 2;
 		white = 2;
 		
+		//現状態でのゾブリストハッシュの値を作る
 		zob.makeZob(data, player);
 	}
 		
 	/*
-	駒を置く処理を作成
+	石を置く処理を作成
 	(x,y)で置く位置を取得し、置けるかどうかをtrueかfalseで返す
 	*/
 	public boolean put(int x, int y){
-		//すでに駒があるところには置けない
+		//すでに石があるところには置けない
 		if(data[x + y * 10] != 0){
 			return false;
 		}
@@ -67,7 +68,7 @@ public class mctGameState{
 			return false;
 		}
 		
-		//駒を置く
+		//石を置く
 		data[x + y * 10] = player;
 		zob.put(x, y, player);
 		
@@ -94,7 +95,7 @@ public class mctGameState{
 	public boolean reverse(int x,int y, boolean doReverse ){
 		/*
 		確かめる方向を指定する配列
-		{x,y} 括弧ごとに2つの数をもち、その関係で方向が決まる(真ん中が(x,y)の座標だとして1ずつ増えていく数にその方向のものを掛けることでその方向の駒を走査できる)
+		{x,y} 括弧ごとに2つの数をもち、その関係で方向が決まる(真ん中が(x,y)の座標だとして1ずつ増えていく数にその方向のものを掛けることでその方向の石を走査できる)
 		*/
 		int dir[][] = {
 				{-1,-1}, {0,-1}, {1,-1},
@@ -117,7 +118,7 @@ public class mctGameState{
 			//隣のマスの値を取得
 			int nextState =data[x0 + y0 * 10];
 			
-			//隣のマスの駒が何も置かれていない場合または壁の場合、現在のturnのplayerの駒である場合、その方向の走査を終了して次の方向へ移る
+			//隣のマスの石が何も置かれていない場合または壁の場合、現在のturnのplayerの石である場合、その方向の走査を終了して次の方向へ移る
 			if(nextState == player || nextState == 0 || nextState == 2){
 				continue;
 			}
@@ -125,34 +126,34 @@ public class mctGameState{
 			
 			//隣の隣から端まで走査して、自分の色があればリバース
 			
-			//確かめる駒と駒を置く位置との距離を入れる変数
+			//確かめる石と石を置く位置との距離を入れる変数
 			int j = 2;
 			
 			while(true){
-				//変数jと方向の関数を掛けることで、駒を置く位置に対しての座標が分かるため、それを駒を置く座標に対して加えることで、もとの状態における位置を指定する
+				//変数jと方向の関数を掛けることで、石を置く位置に対しての座標が分かるため、それを石を置く座標に対して加えることで、もとの状態における位置を指定する
 				int x1 = x + (dir[i][0]*j);
 				int y1 = y + (dir[i][1]*j);
 				
-				//自分の駒がある場合
+				//自分の石がある場合
 				if(data[x1 + y1 * 10]==player){
 					//System.out.println("Player cell!: " +x1 +","+ y1);
 					
 					//doReverseがtrueの場合（置き換える処理の場合）置き換える
 					if(doReverse){
 						
-						//自分の駒があった位置と駒を置く位置の間の駒を置き換える
+						//自分の石があった位置と石を置く位置の間の石を置き換える
 						//1からj-1まで順に増やしていくことで、2つの距離間にあるマスを指定できる
 						for(int k=1; k<j; k++){
 							//マス指定
 							int x2 = x + (dir[i][0]*k);
 							int y2 = y + (dir[i][1]*k);
-							int enemy_player = player * -1;
-							//駒の変更
-							zob.put(x2, y2, enemy_player);
+							//石の変更
+							//zobristのputメソッドを使って石を変更する
+							zob.put(x2, y2, player);
 							data[x2 + y2 * 10] *= -1;
 						}
 					}
-					//置くことにより変わる駒があるので、置けるマスがあると判断し、reversed変数をtrueにする
+					//置くことにより変わる石があるので、置けるマスがあると判断し、reversed変数をtrueにする
 					reversed = true;
 					//この方向の走査は終わったので、whileを終了する
 					break;
@@ -193,7 +194,7 @@ public class mctGameState{
 		for(int y=1; y<size; y++){
 			for(int x=1; x<size; x++){
 				
-				//すでに駒があるところはチェックせずスキップする
+				//すでに石があるところはチェックせずスキップする
 				if(data[x + y * 10] != 0){
 					continue;
 				}
@@ -211,7 +212,7 @@ public class mctGameState{
 		return true;
 	}
 	
-	//それぞれの駒の枚数を数えるメソッド
+	//それぞれの石の枚数を数えるメソッド
 	public void countDisc(){
 		
 		black = 0;
