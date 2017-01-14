@@ -42,11 +42,15 @@ public class mctMainPanel{
 		
 		//現在の状態のゾブリストハッシュの値を作る
 		state.zob.makeZob(s_data, player);
+		
+		//stateにこの値をセットする
+		state.set(s_data, turn, player);
 	}
 	
 	//mct用のプレイアウトを行うメソッド
 	//1回プレイアウトを行うごとにそのプレイアウトの結果を返す
 	public int mctGame(){
+		
 		Game();
 		return state.Win();
 	}
@@ -61,8 +65,7 @@ public class mctMainPanel{
 			if(state.player == b_cpu.color){
 				//cpu内のdecideメソッドで置く場所を決定
 				int b_action[] = b_cpu.decide(state);
-				
-				//座標が以外で置ける場所がある場合のみ駒を置く処理をする
+				//置ける場所がある場合のみ駒を置く処理をする
 				if(b_action[0] != -1){
 					state.put(b_action[0], b_action[1]);
 				}
@@ -77,6 +80,7 @@ public class mctMainPanel{
 				}
 				
 			}
+			
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;
@@ -97,6 +101,27 @@ public class mctMainPanel{
 			zobrist = state.zob.zobrist;
 			state.set(s_data, turn, player);
 		}
+		return zobrist;
+	}
+	
+	//探索中に石を打った場合のゾブリストの値を返す変数
+	//上記のものと違って、変数を現在の状態に戻すと困るため、探索中の状態の変数をとる
+	public int reverseZob(int x,int y, int[] ss_data,int ss_turn,int ss_player){
+		int zobrist = 0;
+		//打てるとき
+		if(state.put(x, y)==true){
+			zobrist = state.zob.zobrist;
+			state.set(ss_data, ss_turn, ss_player);
+		}
+		return zobrist;
+	}
+
+	
+	//パスしたときのゾブリストの値を返す変数
+	public int passZob(int[] ss_data,int ss_turn,int ss_player){
+		state.pass();
+		int zobrist = state.zob.zobrist;
+		state.set(ss_data, ss_turn, ss_player);
 		return zobrist;
 	}
 }

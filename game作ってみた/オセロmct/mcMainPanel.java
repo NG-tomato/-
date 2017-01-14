@@ -35,33 +35,14 @@ public class mcMainPanel{
 	int bbb;
 	//メインパネルを作成するメソッド
 	public mcMainPanel(int c, int[] d, int t, int p){
-		//CPUを選択
-		/*
-		//ランダムで打つAIのクラスRandomCPUを作成
-		//black
-		if(B_CPU == 1){
-		}
-		//ランダムで打つAIのクラスRandomCPUを作成
-		//white
-		if(W_CPU == 1){
-		}
-		*/
 		
 		count = c;
-		//System.arraycopy(d, 0, s_data, 0, d.length);
 		s_data = Arrays.copyOf(d ,d.length);
 
 		turn = t;
 		player = p;
 		
 		
-		/*
-		for(int i = 0; i < count; i++){
-			//TextDisplay();
-			Game();
-			state.reset();
-		}
-		*/
 	}
 	
 	public void mcGame(int[] put){

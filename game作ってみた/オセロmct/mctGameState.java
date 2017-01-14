@@ -189,16 +189,15 @@ public class mctGameState{
 	
 	//パスかどうかを判定するメソッド
 	public boolean checkPass(){
-		
+
 		//コピーデータの全升目に対して、リバースできるかチェック
-		for(int y=1; y<size; y++){
-			for(int x=1; x<size; x++){
-				
-				//すでに石があるところはチェックせずスキップする
-				if(data[x + y * 10] != 0){
+		for(int x=1; x<size; x++){
+			for(int y=1; y<size; y++){
+
+				//すでに石があるところまたは壁のところはチェックせずスキップする
+				if(data[x + y * 10] != 0 || data[x + y * 10] == 2){
 					continue;
 				}
-				
 				//リバースできる（した）とき、元に戻してfalseを返す
 				//canReverseメソッドを利用して確かめる
 				if(canReverse(x,y) == true){
@@ -208,6 +207,7 @@ public class mctGameState{
 				
 			}
 		}
+		System.out.println("test"); //	テストしているところ <-------------
 		//置ける場所がないのでtrueを返す
 		return true;
 	}
