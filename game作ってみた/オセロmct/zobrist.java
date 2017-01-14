@@ -11,7 +11,7 @@ public class zobrist {
 	//手を決めるときに変更するゾブリストの値
 	int zobrist = 0;
 	
-	//ある場所に駒が置かれた状況ごとの変数を作成
+	//ある場所に石が置かれた状況ごとの変数を作成
 	public zobrist(){
 		Random rnd = new Random();
 		for(int i = 0;i < 8 * 8;i++){
@@ -21,20 +21,27 @@ public class zobrist {
 	}
 	
 	//その時点でのゾブリストハッシュの値を作る関数
-	//現状態の盤面のところから、
+	//現状態の盤面で石が存在している場所ごとにその値の排他的論理和をとる
 	public void makeZob(int[] state, int c){
 		for(int i = 0;i < 8;i++){
 			for(int j = 0;j < 8;j++){
+				//石が存在している場合その石がどちらの石か判別して排他的論理和をとる(どちらでもない場合は何もしない)
+				//壁の部分を検査しないようにstateの座標(x,y)には+1する
+				//黒の場合
 				if(state[(i+1) + (j+1) * 10] == 1){
 					zobrist = zobrist ^ black[i + j * 8];
-				}else if(state[(i+1) + (j+1) * 10] == -1){
+				}
+				//白の場合
+				else if(state[(i+1) + (j+1) * 10] == -1){
 					zobrist = zobrist ^ white[i + j * 8];
 				}
 			}
 		}
+		//プレイヤが白の場合、ビット反転をする
 		if(c == -1){
 			zobrist = ~ zobrist;
 		}
+		//リセットなどを行うために、現時点のゾブリストハッシュの値として保存する
 		zobrist_now = zobrist;
 	}
 	
