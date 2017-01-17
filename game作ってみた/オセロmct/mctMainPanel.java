@@ -94,7 +94,6 @@ public class mctMainPanel{
 	}
 	
 	public void EndGame(){
-		//System.out.println("aaa");
 		winner = state.Win();
 	}
 

@@ -225,7 +225,9 @@ public class mctGameState{
 			}
 		}
 	}
+	
 	public int Win(){
+		countDisc();
 		if(black > white){
 			return 1;
 		}else if(black < white){

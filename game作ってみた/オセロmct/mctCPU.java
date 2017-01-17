@@ -62,7 +62,13 @@ public class mctCPU {
 				
 			}
 		}
-		
+		//ゾブリストハッシュの値が乱数になっているかの確認
+		/*
+		for(int x =0;x <array.size();x++){
+			int[] data = array.get(x);
+			System.out.println(data[2]);
+		}
+		*/
 		
 		//置ける場所がない場合
 		//追記必要（パスの動作で探索を行うようにする）<-----------------------
@@ -87,8 +93,8 @@ public class mctCPU {
 		//ポイントが最大の手を求める
 		int i = selectUCB(array);
 		
-		//選んだ手のデータを表示
 		/*
+		//選んだ手のデータを表示
 		int[] select_data = array.get(i);
 		double[] playout = map.get(select_data[2]); 
 		System.out.println("選んだ手のプレイアウト数 : " + playout[0]);
@@ -235,7 +241,7 @@ public class mctCPU {
 			
 			//プレイアウト数が0の場合その手を選択する（このときUCB1値が無限になってしまうので先に除外する）
 			//プレイアウト数0の手はまだmap上に作られていないので存在しているかどうかで判断する
-			if(map.containsKey(search_point[2]) == false){
+			if(!map.containsKey(search_point[2])){
 				//mapに入れるための空の配列をつくる
 				double[] put_data = new double[3];
 				//マップに空の配列を追加する
