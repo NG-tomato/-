@@ -15,7 +15,7 @@ public class mctCPU {
 	int total_count = 0;
 	
 	//探索を深くするときのしきい値
-	int threshold = 10;
+	int threshold = 20;
 	
 	//mapに入れるデータの配列
 	//{プレイアウト数,勝数}
@@ -83,11 +83,18 @@ public class mctCPU {
 			
 		}
 		
-		//テスト ここまで動いていることを確認 <------------------------
-		System.out.println("テスト");
 		
 		//ポイントが最大の手を求める
 		int i = selectUCB(array);
+		
+		//選んだ手のデータを表示
+		/*
+		int[] select_data = array.get(i);
+		double[] playout = map.get(select_data[2]); 
+		System.out.println("選んだ手のプレイアウト数 : " + playout[0]);
+		System.out.println("選んだ手の勝数 : " + playout[1]);
+		System.out.println("選んだ手のUCB1 : " + playout[2]);
+		*/
 		
 		//手の(x,y)座標
 		return Arrays.copyOf(array.get(i), 2);
@@ -180,8 +187,6 @@ public class mctCPU {
 		}
 		//select関数が呼び出されていないときプレイアウトをする
 		else{
-						System.out.println("テスト");
-
 			//-------------------プレイアウトをする
 			winner = p.mctGame();
 		}

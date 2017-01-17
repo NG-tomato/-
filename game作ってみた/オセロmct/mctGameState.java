@@ -205,7 +205,6 @@ public class mctGameState{
 				
 			}
 		}
-		System.out.println("test"); //	テストしているところ <-------------
 		//置ける場所がないのでtrueを返す
 		return true;
 	}

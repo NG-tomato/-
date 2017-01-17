@@ -56,7 +56,6 @@ public class mctMainPanel{
 		return winner;
 	}
 	
-	
 	//プレイアウトをゲーム終了（ゲーム終了）まで行うクラス
 	public void Game(){
 		

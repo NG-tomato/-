@@ -6,11 +6,8 @@
 import java.util.*;
 
 /*
-パネル作成を行うクラスを継承
-implements で受け取るイベントを実装する
-implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある(ないとエラーになる)ため、共通の規格として扱える
-MouseListener はマウスイベントを受け取るクラス
-Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
+パネルクラス
+基本的動作を実装
 */
 public class MainPanel{
 	//縦横のマス
@@ -103,7 +100,7 @@ public class MainPanel{
 				//cpu内のdecideメソッドで置く場所を決定
 				int b_action[] = b_cpu.decide(state);
 				
-				//座標が以外で置ける場所がある場合のみ駒を置く処理をする
+				//置ける場所がある場合のみ駒を置く処理をする
 				if(b_action[0] != -1){
 					state.put(b_action[0], b_action[1]);
 					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
