@@ -12,62 +12,53 @@ implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある
 MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
-public class mcMainPanel{
-	int size = 10;
+public class MainPanel{
+	//縦横のマス
+	int Squares = 8;
 	
 	//状態を表すクラスstateを作成
-	GameState state = new GameState();
+	GameState state = new GameState(Squares);
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	RandomCPU b_cpu = new RandomCPU(1);
+	mcCPU b_cpu = new mcCPU(1,Squares);
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1);
+	/*
+	mcCPU w_cpu = new mcCPU(-1, Squares);
+	*/
+	RandomCPU w_cpu = new RandomCPU(-1, Squares);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
-	int s_data[] = new int[size * size];
-	int count;
-	int turn;
-	int player;
-	
-	//プレイアウトの総計を保存する変数
-	
-	int bbb;
 	//メインパネルを作成するメソッド
-	public mcMainPanel(int c, int[] d, int t, int p){
+	public MainPanel(int count){
+		//CPUを選択
+		/*
+		//ランダムで打つAIのクラスRandomCPUを作成
+		//black
+		if(B_CPU == 1){
+		}
+		//ランダムで打つAIのクラスRandomCPUを作成
+		//white
+		if(W_CPU == 1){
+		}
+		*/
 		
-		count = c;
-		s_data = Arrays.copyOf(d ,d.length);
-
-		turn = t;
-		player = p;
-		
-		
-	}
-	
-	public void mcGame(int[] put){
-		
-			state.set(s_data, turn, player);
-			state.put(put[0], put[1]);
+		for(int i = 0; i < count; i++){
+			//TextDisplay();
 			Game();
-	}
-	
-	
-	public int rePoint(int p){
-		int point = 0;
-		
-		if(p == 1){
-			point = winCount[0];
-		}else{
-			point = winCount[1];
+			state.reset();
 		}
 		
-		winCount = new int[3];
-		
-		return point;
+		System.out.println();
+		System.out.println("---Roop END---");
+		System.out.println("Black win : " + winCount[0]);
+		System.out.println("White win : " + winCount[1]);
+		System.out.println("Drow      : " + winCount[2]);
+
 	}
+	
 	
 	//描写を行うメソッド
 	public void TextDisplay(){
@@ -76,13 +67,13 @@ public class mcMainPanel{
 		System.out.println();
 		
 		//左上から順にマスと駒を表示
-		for(int y=1; y<size - 1; y++){
-			for(int x=1; x<size - 1; x++){
+		for(int y=1; y<Squares + 1; y++){
+			for(int x=1; x<Squares + 1; x++){
 				System.out.print("|");
-				if(state.data[x + y * size] == 1){
+				if(state.data[x][y] == 1){
 					//黒の駒を表示
 					System.out.print("○");
-				}else if(state.data[x + y * size] == -1){
+				}else if(state.data[x][y] == -1){
 					//白の駒を表示
 					System.out.print("●");
 				}else{
@@ -103,7 +94,7 @@ public class mcMainPanel{
 	}
 	
 	
-	//プレイアウトを行うクラス
+	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
 	public void Game(){
 		
 		for(;;){
@@ -116,7 +107,13 @@ public class mcMainPanel{
 				//座標が以外で置ける場所がある場合のみ駒を置く処理をする
 				if(b_action[0] != -1){
 					state.put(b_action[0], b_action[1]);
+					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
 				}
+				/*盤面が埋まったら終了
+				if(state.turn == (Squares * Squares) - 4){
+					TextDisplay();
+					EndGame();
+				}*/
 			}
 			else if(state.player == w_cpu.color){
 				//cpu内のdecideメソッドで置く場所を決定
@@ -125,9 +122,16 @@ public class mcMainPanel{
 				//置ける場所がある場合のみ駒を置く処理をする
 				if(w_action[0] != -1){
 					state.put(w_action[0], w_action[1]);
+					//System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
 				}
 				
+				/*盤面が埋まったら終了
+				if(state.turn == (Squares * Squares) - 4){
+					TextDisplay();
+					EndGame();
+				}*/
 			}
+			//TextDisplay();
 			//パスチェック
 			if( state.checkPass() == true ){
 				state.player *= -1;
@@ -136,16 +140,16 @@ public class mcMainPanel{
 					EndGame();
 					break;
 				}
+				//System.out.println("Pass! Next turn is : "+state.player);
 			}
 		}
 	}
 	
 	
 	public void EndGame(){
-		bbb ++;
 		//System.out.println("---Game END---");
 		int End = state.Win();
-		//String Winner;
+		String Winner;
 		if(End == 1){
 		//	Winner = "black";
 			winCount[0] ++;

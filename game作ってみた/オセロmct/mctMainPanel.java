@@ -18,16 +18,16 @@ public class mctMainPanel{
 	mct_RandomCPU b_cpu = new mct_RandomCPU(1);
 	//white
 	mct_RandomCPU w_cpu = new mct_RandomCPU(-1);
-	
-	//勝敗の結果の合計を入れる配列
-	int winCount[] = new int[3];
-	
+		
 	//stateの情報をリセットするときに使うデータを保存する変数
 	//盤面のデータ
 	int s_data[] = new int[size * size];
 	//ターン
 	int turn;
 	int player;
+	
+	//プレイアウトが終わったときに勝者を入れる変数
+	int winner;
 	
 	//プレイアウトの回数をカウントする変数
 	int game_count;
@@ -52,7 +52,8 @@ public class mctMainPanel{
 	public int mctGame(){
 		
 		Game();
-		return state.Win();
+		state.set(s_data, turn, player);
+		return winner;
 	}
 	
 	
@@ -86,11 +87,18 @@ public class mctMainPanel{
 				state.player *= -1;
 				//両方パスだと終了
 				if(state.checkPass() == true){
+					EndGame();
 					break;
 				}
 			}
 		}
 	}
+	
+	public void EndGame(){
+		//System.out.println("aaa");
+		winner = state.Win();
+	}
+
 	
 	//(x,y)に石を打ったときのゾブリストの値を返す変数
 	//打てない時は0を返す

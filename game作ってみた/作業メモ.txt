@@ -9,3 +9,9 @@ mc完成
 後回し
 
 CPU変更機能
+
+
+
+オセロmct変更点
+・mctMainPanel 
+reverseZobを変更
