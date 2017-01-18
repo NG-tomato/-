@@ -27,7 +27,7 @@ public class mct_RandomCPU {
 					continue;
 				
 				//置けるマスのとき、候補として記憶
-				if(state.canReverse(x, y) == true){
+				if(state.canPut(x, y) == true){
 					
 					//[x,y]の2つの要素を持つ配列として記憶する
 					int pos[] = {x,y};

@@ -40,9 +40,6 @@ public class mctMainPanel{
 		turn = t;
 		player = p;
 		
-		//現在の状態のゾブリストハッシュの値を作る
-		state.zob.makeZob(s_data, player);
-		
 		//stateにこの値をセットする
 		state.set(s_data, turn, player);
 	}
@@ -98,36 +95,36 @@ public class mctMainPanel{
 	}
 
 	
-	//(x,y)に石を打ったときのゾブリストの値を返す変数
-	//打てない時は0を返す
-	public int reverseZob(int x,int y){
-		int zobrist = 0;
-		//打てるとき
-		if(state.put(x, y)==true){
-			zobrist = state.zob.zobrist;
-			state.set(s_data, turn, player);
-		}
-		return zobrist;
-	}
+	// //(x,y)に石を打ったときのゾブリストの値を返す変数
+	// //打てない時は0を返す
+	// public int reverseZob(int x,int y){
+	// 	int zobrist = 0;
+	// 	//打てるとき
+	// 	if(state.put(x, y)==true){
+	// 		zobrist = state.zob.zobrist;
+	// 		state.set(s_data, turn, player);
+	// 	}
+	// 	return zobrist;
+	// }
 	
-	//探索中に石を打った場合のゾブリストの値を返す変数
-	//上記のものと違って、変数を現在の状態に戻すと困るため、探索中の状態の変数をとる
-	public int reverseZob(int x,int y, int[] ss_data,int ss_turn,int ss_player){
-		int zobrist = 0;
-		//打てるとき
-		if(state.put(x, y)==true){
-			zobrist = state.zob.zobrist;
-			state.set(ss_data, ss_turn, ss_player);
-		}
-		return zobrist;
-	}
+	// //探索中に石を打った場合のゾブリストの値を返す変数
+	// //上記のものと違って、変数を現在の状態に戻すと困るため、探索中の状態の変数をとる
+	// public int reverseZob(int x,int y, int[] ss_data,int ss_turn,int ss_player){
+	// 	int zobrist = 0;
+	// 	//打てるとき
+	// 	if(state.put(x, y)==true){
+	// 		zobrist = state.zob.zobrist;
+	// 		state.set(ss_data, ss_turn, ss_player);
+	// 	}
+	// 	return zobrist;
+	// }
 
 	
-	//パスしたときのゾブリストの値を返す変数
-	public int passZob(int[] ss_data,int ss_turn,int ss_player){
-		state.pass();
-		int zobrist = state.zob.zobrist;
-		state.set(ss_data, ss_turn, ss_player);
-		return zobrist;
-	}
+	// //パスしたときのゾブリストの値を返す変数
+	// public int passZob(int[] ss_data,int ss_turn,int ss_player){
+	// 	state.pass();
+	// 	int zobrist = state.zob.zobrist;
+	// 	state.set(ss_data, ss_turn, ss_player);
+	// 	return zobrist;
+	// }
 }

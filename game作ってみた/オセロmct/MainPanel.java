@@ -42,46 +42,41 @@ public class MainPanel{
 		*/
 		
 		for(int i = 0; i < count; i++){
-			//TextDisplay();
-			Game();
+			//textDisplay();
+			game();
 			state.reset();
 		}
 		
 		System.out.println();
-		System.out.println("---Roop END---");
+		System.out.println("---Loop END---");
 		System.out.println("Black win : " + winCount[0]);
 		System.out.println("White win : " + winCount[1]);
-		System.out.println("Drow      : " + winCount[2]);
+		System.out.println("Draw      : " + winCount[2]);
 
 	}
 	
 	
 	//描写を行うメソッド
-	public void TextDisplay(){
-				
-		
+	public void textDisplay(){
 		System.out.println();
 		
 		//左上から順にマスと駒を表示
-		for(int y=1; y<10 + 1; y++){
-			for(int x=1; x<10 + 1; x++){
+		for(int y=1; y<=8; y++){
+			for(int x=1; x<=8; x++){
 				System.out.print("|");
-				if(state.data[x + y * 10] == 1){
-					//黒の駒を表示
-					System.out.print("○");
-				}else if(state.data[x + y * 10] == -1){
-					//白の駒を表示
-					System.out.print("●");
-				}else{
+				switch (state.data[x + y * 10]) {
+				case 1:
+					System.out.print("○");					//黒の駒を表示
+					break;
+				case -1:
+					System.out.print("●");					//白の駒を表示
+					break;
+				default:
 					System.out.print("  ");
 				}
 			}
 			System.out.println("|");
 		}
-		
-		
-		System.out.println();
-		
 		System.out.println("TURN = "+state.turn);
 		System.out.println("PLAYER = "+state.player);
 		System.out.println("DISC = "+state.black+" : " +state.white);
@@ -90,59 +85,51 @@ public class MainPanel{
 	}
 	
 	
-	//コンポーネント上でマウスボタンが押されると呼び出されるクラス
-	public void Game(){
+	public void game(){
+		boolean isLastPass = false;
 		
 		for(;;){
-			//CPUのターン
-			//Black
-			if(state.player == b_cpu.color){
-				//cpu内のdecideメソッドで置く場所を決定
-				int b_action[] = b_cpu.decide(state);
-				
-				//置ける場所がある場合のみ駒を置く処理をする
-				if(b_action[0] != -1){
-					state.put(b_action[0], b_action[1]);
-					//System.out.println("Black put point is : "+b_action[0]+" ,"+b_action[1]);				
-				}
-				/*盤面が埋まったら終了
-				if(state.turn == (10 * 10) - 4){
-					TextDisplay();
-					EndGame();
-				}*/
-			}
-			else if(state.player == w_cpu.color){
-				//cpu内のdecideメソッドで置く場所を決定
-				int w_action[] = w_cpu.decide(state);
-				
-				//置ける場所がある場合のみ駒を置く処理をする
-				if(w_action[0] != -1){
-					state.put(w_action[0], w_action[1]);
-					//System.out.println("White put point is : "+w_action[0]+" ,"+w_action[1]);
-				}
-				
-				/*盤面が埋まったら終了
-				if(state.turn == (10 * 10) - 4){
-					TextDisplay();
-					EndGame();
-				}*/
-			}
-			//TextDisplay();
-			//パスチェック
+			//textDisplay();
+
+			// 置くところがなければパス
 			if( state.checkPass() == true ){
-				state.player *= -1;
-				//両方パスだと終了
-				if(state.checkPass() == true){
-					EndGame();
+				if (isLastPass) {	//両方パスだと終了
 					break;
 				}
+				
+				state.player *= -1;
+				isLastPass = true;
 				//System.out.println("Pass! Next turn is : "+state.player);
+				continue;
+			}
+			isLastPass = false;
+			
+			// 以下では必ず置けるものとする．
+			if(state.player == b_cpu.color){ 			//Black
+
+				//cpu内のdecideメソッドで置く場所を決定
+				int action[] = b_cpu.decide(state);
+				if (action[0] == -1 || action[1] == -1) { throw new RuntimeException("Illegal Move by Black: (-1, -1)"); }
+				//置ける場所がある場合のみ駒を置く処理をする
+				state.put(action[0], action[1]);
+				//System.out.println("Black put point is : "+action[0]+" ,"+action[1]);
+			}
+			else { // White
+				//cpu内のdecideメソッドで置く場所を決定
+				int action[] = w_cpu.decide(state);
+				
+				if (action[0] == -1 || action[1] == -1) { throw new RuntimeException("Illegal Move by White: (-1, -1)"); }
+				//置ける場所がある場合のみ駒を置く処理をする
+				state.put(action[0], action[1]);
+				//System.out.println("White put point is : "+action[0]+" ,"+action[1]);
 			}
 		}
+
+		endGame();
 	}
 	
 	
-	public void EndGame(){
+	public void endGame(){
 		//System.out.println("---Game END---");
 		int End = state.Win();
 		String Winner;

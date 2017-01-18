@@ -1,78 +1,89 @@
 import java.util.*;
 
-public class zobrist {
-	//ある場所に駒が置かれた状況ごとの変数を入れる配列
-	int[] black = new int[8 * 8];
-	int[] white = new int[8 * 8];
-	
-	//現時点のゾブリスト値
-	private int zobrist_now = 0;
-	
-	//手を決めるときに変更するゾブリストの値
-	int zobrist = 0;
-	
-	//ある場所に石が置かれた状況ごとの変数を作成
-	public zobrist(){
-		Random rnd = new Random();
-		for(int i = 0;i < 8 * 8;i++){
-			black[i] = rnd.nextInt();
-			white[i] = rnd.nextInt();
+public class Zobrist {
+	private static Zobrist instance = new Zobrist();
+
+	// user 向けの関数群
+	public static int makeZob(int[] state, int player) {
+		return instance.makeZobCore(state, player);
+	}
+
+	//駒を置く動作を行った後に手順の情報を入れるメソッド
+	public static int color(int zobrist) {
+		return zobrist ^ 0x1;
+	}
+
+	// 0 ==> c へと変化させる場合
+	public static int put(int zobrist, int pos, int c) {
+		if (c == mctGameState.BLACK) {
+			return instance.putBlack(zobrist, pos);
+		} else if (c == mctGameState.WHITE) {
+			return instance.putWhite(zobrist, pos);
+		} else {
+			throw new RuntimeException("error color c");
+		}
+	}
+
+	// -c ==> c へと変化させる場合
+	public static int reverse(int zobrist, int pos, int c) {
+		if (c == mctGameState.BLACK) {
+			zobrist = instance.unputWhite(zobrist, pos);
+			zobrist = instance.putBlack(zobrist, pos);
+			return zobrist;
+		} else if (c == mctGameState.WHITE) {
+			zobrist = instance.unputBlack(zobrist, pos);
+			zobrist = instance.putWhite(zobrist, pos);
+			return zobrist;
+		} else {
+			throw new RuntimeException("error color c");
 		}
 	}
 	
-	//その時点でのゾブリストハッシュの値を作る関数
-	//現状態の盤面で石が存在している場所ごとにその値の排他的論理和をとる
-	public void makeZob(int[] state, int c){
-		for(int i = 0;i < 8;i++){
-			for(int j = 0;j < 8;j++){
-				//石が存在している場合その石がどちらの石か判別して排他的論理和をとる(どちらでもない場合は何もしない)
-				//壁の部分を検査しないようにstateの座標(x,y)には+1する
-				//黒の場合
-				if(state[(i+1) + (j+1) * 10] == 1){
-					zobrist = zobrist ^ black[i + j * 8];
-				}
-				//白の場合
-				else if(state[(i+1) + (j+1) * 10] == -1){
-					zobrist = zobrist ^ white[i + j * 8];
-				}
+	////////////////////////////////////////////////////////////////////////
+	// 実態
+	private int makeZobCore(int[] state, int player) {
+		int zobrist = 0;
+		for (int i = 0; i < state.length; i++) {
+			switch (state[i]) {
+			case mctGameState.BLACK:
+				zobrist = putBlack(zobrist, i);
+				break;
+			case mctGameState.WHITE:
+				zobrist = putWhite(zobrist, i);
+				break;
 			}
 		}
-		//プレイヤが白の場合、ビット反転をする
-		if(c == -1){
-			zobrist = ~ zobrist;
+		if (player == mctGameState.WHITE) {
+			zobrist = zobrist ^ 0x1;
 		}
-		//リセットなどを行うために、現時点のゾブリストハッシュの値として保存する
-		zobrist_now = zobrist;
+		return zobrist;
+	}
+
+	private int unputBlack(int zobrist, int pos) {
+		return zobrist ^ black[pos];
+	}
+	private int putBlack(int zobrist, int pos) {
+		return zobrist ^ black[pos];
+	}
+	private int unputWhite(int zobrist, int pos) {
+		return zobrist ^ white[pos];
+	}
+	private int putWhite(int zobrist, int pos) {
+		return zobrist ^ white[pos];
 	}
 	
-	//置かれた際の1つの石の状態が変化したことを表す変数
-	//石を置く動作と一緒に繰り返させる
-	public void put(int x, int y, int c){
-		//壁のところは作ってないので，壁の分x,y座標の値を減らす
-		x = x-1;
-		y = y-1;
-		//白が黒に変わったとき、その場所の白の値の排他的論理和を取ることで値を戻し、黒の値の排他的論理和をとる
-		if(c == 1){
-			zobrist = zobrist ^ white[x + y * 8];
-			zobrist = zobrist ^ black[x + y * 8];
+	//ある場所に駒が置かれた状況ごとの定数を入れる配列
+	int[] black = new int[10 * 10];
+	int[] white = new int[10 * 10];
+
+	//ある場所に石が置かれた状況ごとの変数を作成
+	private Zobrist(){
+		Random rnd = new Random();
+		for (int y = 1; y <= 8; y++) {
+			for (int x = 1; x <= 8; x++) {
+				black[x + y * 10] = rnd.nextInt() & (~0x1);
+				white[x + y * 10] = rnd.nextInt() & (~0x1);
+			}
 		}
-		//黒が白に変わったとき、その場所の黒の値の排他的論理和をとることで値を戻し、白の値の排他的論理和をとる
-		else if(c == -1){
-			zobrist = zobrist ^ black[x + y * 8];
-			zobrist = zobrist ^ white[x + y * 8];
-		}
 	}
-	//駒を置く動作を行った後に手順の情報を入れるメソッド
-	//石を置き終わった後に行う
-	public void color(){
-		//ゾブリストハッシュの値を反転させる
-			zobrist = ~ zobrist;
-	}
-	
-	
-	//現時点でのゾブリストの値に戻す
-	public void reset(){
-		zobrist = zobrist_now;
-	}
-	
 }

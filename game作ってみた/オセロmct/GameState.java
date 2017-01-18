@@ -284,4 +284,31 @@ public class GameState extends Observable{
 		player = p;
 		countDisc();
 	}
+
+	//描写を行うメソッド
+	public void textDisplay(){
+		//左上から順にマスと駒を表示
+		for(int y=1; y<=8; y++){
+			for(int x=1; x<=8; x++){
+				System.out.print("|");
+				switch (data[x + y * 10]) {
+				case 1:
+					System.out.print("○");					//黒の駒を表示
+					break;
+				case -1:
+					System.out.print("●");					//白の駒を表示
+					break;
+				default:
+					System.out.print("  ");
+				}
+			}
+			System.out.println("|");
+		}
+		System.out.println("TURN = "+turn);
+		System.out.println("PLAYER = "+player);
+		System.out.println("DISC = "+black+" : " +white);
+		System.out.println("");
+	}
+
+	
 }
