@@ -17,29 +17,18 @@ public class MainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	mcCPU b_cpu = new mcCPU(1);
+	mcCPU w_cpu = new mcCPU(-1);
 	//RandomCPU b_cpu = new RandomCPU(1);
 	
 	//white
-	mctCPU w_cpu = new mctCPU(-1);
-	//RandomCPU w_cpu = new RandomCPU(-1);
+	mctCPU b_cpu = new mctCPU(1);
+	//RandomCPU b_cpu = new RandomCPU(1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
 	//メインパネルを作成するメソッド
 	public MainPanel(int count){
-		//CPUを選択
-		/*
-		//ランダムで打つAIのクラスRandomCPUを作成
-		//black
-		if(B_CPU == 1){
-		}
-		//ランダムで打つAIのクラスRandomCPUを作成
-		//white
-		if(W_CPU == 1){
-		}
-		*/
 		
 		for(int i = 0; i < count; i++){
 			//textDisplay();
@@ -89,11 +78,12 @@ public class MainPanel{
 		boolean isLastPass = false;
 		
 		for(;;){
-			//textDisplay();
+			textDisplay();
 
 			// 置くところがなければパス
 			if( state.checkPass() == true ){
 				if (isLastPass) {	//両方パスだと終了
+					endGame();
 					break;
 				}
 				
@@ -124,15 +114,12 @@ public class MainPanel{
 				//System.out.println("White put point is : "+action[0]+" ,"+action[1]);
 			}
 		}
-
-		endGame();
 	}
 	
-	
+	int GameCount = 0;
 	public void endGame(){
 		//System.out.println("---Game END---");
 		int End = state.Win();
-		String Winner;
 		if(End == 1){
 		//	Winner = "black";
 			winCount[0] ++;
@@ -143,6 +130,10 @@ public class MainPanel{
 		//	Winner = "Drow";
 			winCount[2] ++;
 		}
+		//textDisplay();
+		GameCount ++;
+		System.out.println("Game count = " + GameCount);
+		System.out.println("Winner = " + End);
 		//System.out.println(Winner + " Win !");
 	}
 }

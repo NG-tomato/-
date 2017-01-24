@@ -1,13 +1,13 @@
 import java.util.*;
 
-public class mcCPU {
+public class mcCPU extends CPU {
 	
 	//自分が置くターンを判別する関数
 	int color;
 	
 	
 	//プレイアウト数
-	int count = 10;
+	int count = 10000;
 	
 	//盤の大きさ(壁のところも含めて)
 	int size = 10;
@@ -54,18 +54,23 @@ public class mcCPU {
 		
 		mcMainPanel p = new mcMainPanel(count, state.data , state.turn, state.player);
 		
-		//p.TextDisplay();
-		//System.out.println(Arrays.deepToString(state.data));
 		
 		//それぞれの手の点数を保存する配列
 		int[] point = new int[array.size()];
-		
-		for(int i=0; i < array.size(); i++){
-			int a[] = array.get(i);
-			for(int j = 0; j < count;j++){
-				p.mcGame(a);
+		//現在探索している手を示す変数
+		int select = 0;
+		//手をずらしながらプレイアウトを繰り返す
+		for(int i=0; i < count; i++){
+			//探索中する手が配列の大きさ以上の場合探索する手を配列の0番目の手にもどす
+			if(select >= array.size()){
+				select = 0;
 			}
-			point[i] = p.rePoint(state.player);
+			//探索する手を打ったあとプレイアウトする
+			//mcGameはプレイアウトを行ったあと元の状態にもどす変数
+			int a[] = array.get(select);
+			p.mcGame(a);
+			point[select] = p.rePoint(state.player);
+			select++;
 		}
 		
 		//ポイントが最大の手を求める
@@ -75,7 +80,6 @@ public class mcCPU {
 				j = i;
 			}
 		}
-		//System.out.println(point[j]);
 		return array.get(j);
 		
 	}
