@@ -20,9 +20,9 @@ public class h_mcMainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	CPU b_cpu = new hyoukaCPU(1);
+	hyoukaCPU b_cpu = new hyoukaCPU(1);
 	//white
-	CPU w_cpu = new hyoukaCPU(-1);
+	hyoukaCPU w_cpu = new hyoukaCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];

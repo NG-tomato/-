@@ -7,7 +7,7 @@ public class h_mcCPU extends CPU {
 	
 	
 	//プレイアウト数
-	int count = 1000;
+	int count = 100;
 	
 	//盤の大きさ(壁のところも含めて)
 	int size = 10;
@@ -52,7 +52,7 @@ public class h_mcCPU extends CPU {
 			return pos;
 		}
 		
-		h_MainPanel p = new h_mcMainPanel(count, state.data , state.turn, state.player);
+		h_mcMainPanel p = new h_mcMainPanel(count, state.data , state.turn, state.player);
 		
 		
 		//それぞれの手の点数を保存する配列

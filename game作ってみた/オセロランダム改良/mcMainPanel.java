@@ -12,7 +12,7 @@ implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある
 MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
-public class mcMainPanel extends MainPanel{
+public class mcMainPanel{
 	int size = 10;
 	
 	//状態を表すクラスstateを作成

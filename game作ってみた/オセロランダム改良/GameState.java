@@ -49,7 +49,7 @@ public class GameState extends Observable{
 	}
 		
 	/*
-	駒を置く処理
+	駒を置く処理を作成
 	(x,y)で置く位置を取得し、置けるかどうかをtrueかfalseで返す
 	*/
 	public boolean put(int x, int y){

@@ -62,7 +62,7 @@ public class hyoukaCPU extends CPU {
 			return data;
 		}
 		
-		int select=0;
+		int select = 0;
 		//探索の必要がある場合は評価を行って点数をつける
 		for(int i = 0;i<array.size();i++){
 			int[] pos = array.get(i);
@@ -75,16 +75,8 @@ public class hyoukaCPU extends CPU {
 			}
 		}
 		
+		//System.out.println("select = "+ select );
 		
-		//手の選び方を考える必要あり  <--------------------------------------
-		/*
-		ランダムクラス内のnextIntメソッドを利用し乱数を作成
-		nextInt(x);
-		0からxまでが乱数が取る可能性がある値
-		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
-		
-		int index = rnd.nextInt(array.size());
-		*/
 		
 		//乱数で選ばれた置ける場所を返す
 		return array.get(select);

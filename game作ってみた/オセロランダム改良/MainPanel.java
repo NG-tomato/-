@@ -17,23 +17,24 @@ public class MainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	mcCPU w_cpu = new mcCPU(-1);
+	h_mcCPU b_cpu = new h_mcCPU(1);
 	//RandomCPU b_cpu = new RandomCPU(1);
 	
 	//white
-	hyoukaCPU b_cpu = new hyoukaCPU(1);
-	//RandomCPU b_cpu = new RandomCPU(1);
+	//mctCPU w_cpu = new mctCPU(1);
+	//hyoukaCPU w_cpu = new hyoukaCPU(-1);
+	RandomCPU w_cpu = new RandomCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
 	
 	//メインパネルを作成するメソッド
 	public MainPanel(int count){
-		/*
-		w_cpu.setThreshold(50);
-		b_cpu.setThreshold(100);
-		*/
+		
 		for(int i = 0; i < count; i++){
+			/*if(i % 10 == 0){
+				System.out.println("Now game count is "+ i);
+			}*/
 			//textDisplay();
 			game();
 			state.reset();
@@ -135,8 +136,9 @@ public class MainPanel{
 		}
 		//textDisplay();
 		GameCount ++;
+		/*
 		System.out.println("Game count = " + GameCount);
 		System.out.println("Winner = " + End);
-		//System.out.println(Winner + " Win !");
+		*/
 	}
 }

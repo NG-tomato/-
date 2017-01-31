@@ -9,13 +9,13 @@ public class mctCPU extends CPU {
 	int size = 10;
 	
 	//1手読むごとの総プレイアウト数
-	int count = 1000;
+	int count = 10000;
 	
 	//プレイアウトを行った回数を保存する変数
 	int total_count = 0;
 	
 	//探索を深くするときのしきい値
-	int threshold = 30;
+	int threshold = 100;
 	
 	//mapに入れるデータの配列
 	//{プレイアウト数,勝数}
@@ -30,11 +30,6 @@ public class mctCPU extends CPU {
 	public mctCPU(int c){
 		color = c;
 	}
-	
-	public void setThreshold(int t){
-		threshold = t;
-	}
-	
 		
 	//手を選ぶメソッド
 	//これを実行することで手を選択
