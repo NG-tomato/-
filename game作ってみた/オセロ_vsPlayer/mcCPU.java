@@ -1,31 +1,35 @@
 import java.util.*;
 
-public class mcCPU {
+public class mcCPU extends CPU {
 	
 	//自分が置くターンを判別する関数
-	int color;	//BLACK or WHITE
-	int size;
+	int color;
 	
 	
 	//プレイアウト数
-	int count = 10;
+	int count = 10000;
 	
-	public mcCPU(int c,int s){
+	//盤の大きさ(壁のところも含めて)
+	int size = 10;
+	
+	//プレイヤを作るときにどっちの色のプレイヤかも指定する
+	public mcCPU(int c){
 		color = c;
-		size = s;
 	}
 	
+	//石を打つときにどこに打つかきめるメソッド
+	//現在の状態(GameStateクラス)を引数にとる
 	int[] decide(GameState state){
 		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
 		
 		//盤面の空マスを置けるかチェック
-		for(int y=1; y<size + 2; y++){
-			for(int x=1; x<size + 2; x++){
+		for(int y=1; y< size-1; y++){
+			for(int x=1; x<size-1; x++){
 				
 				//すでに駒があるときはパス
-				if(state.data[x][y] != 0)
+				if(state.data[x + y * size] != 0)
 					continue;
 				
 				//置けるマスのとき、候補として記憶
@@ -41,7 +45,6 @@ public class mcCPU {
 			}
 		}
 		
-		//ランダム選択
 		
 		//置ける場所がない場合は座標が{-1,-1}として返す
 		if(array.size() <= 0){
@@ -51,16 +54,23 @@ public class mcCPU {
 		
 		mcMainPanel p = new mcMainPanel(count, state.data , state.turn, state.player);
 		
-		//p.TextDisplay();
-		//System.out.println(Arrays.deepToString(state.data));
 		
 		//それぞれの手の点数を保存する配列
 		int[] point = new int[array.size()];
-		
-		for(int i=0; i < array.size(); i++){
-			int a[] = array.get(i);
+		//現在探索している手を示す変数
+		int select = 0;
+		//手をずらしながらプレイアウトを繰り返す
+		for(int i=0; i < count; i++){
+			//探索中する手が配列の大きさ以上の場合探索する手を配列の0番目の手にもどす
+			if(select >= array.size()){
+				select = 0;
+			}
+			//探索する手を打ったあとプレイアウトする
+			//mcGameはプレイアウトを行ったあと元の状態にもどす変数
+			int a[] = array.get(select);
 			p.mcGame(a);
-			point[i] = p.rePoint(state.player);
+			point[select] = p.rePoint(state.player);
+			select++;
 		}
 		
 		//ポイントが最大の手を求める
@@ -70,24 +80,8 @@ public class mcCPU {
 				j = i;
 			}
 		}
-		//System.out.println(point[j]);
 		return array.get(j);
 		
-		/*
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
-		
-		/*
-		//ランダムクラス内のnextIntメソッドを利用し乱数を作成
-		nextInt(x);
-		0からxまでが乱数が取る可能性がある値
-		置ける位置のいずれかを選択すればいいので、置ける場所を保存したリストのサイズ数内の範囲で乱数を作成することでランダムで置く場所を決めるようにする
-		
-		int index = rnd.nextInt(array.size());
-		
-		//乱数で選ばれた置ける場所を返す
-		return array.get(index);
-		*/
-}
+	}
 	
 }

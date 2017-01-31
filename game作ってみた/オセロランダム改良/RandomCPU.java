@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class mct_RandomCPU {
+public class RandomCPU extends CPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
@@ -9,11 +9,11 @@ public class mct_RandomCPU {
 	//ランダムクラスのインスタンス化
 	Random rnd = new Random();
 	
-	public mct_RandomCPU(int c){
+	public RandomCPU(int c){
 		color = c;
 	}
 	
-	int[] decide(mctGameState state){
+	int[] decide(GameState state){
 		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
@@ -59,4 +59,5 @@ public class mct_RandomCPU {
 		//乱数で選ばれた置ける場所を返す
 		return array.get(index);
 	}
+	
 }

@@ -1,14 +1,16 @@
 import java.util.*;
 
-public class RandomCPU {
+public class RandomCPU extends CPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
-	int size;
+	int size = 10;
 	
-	public RandomCPU(int c,int s){
+	//ランダムクラスのインスタンス化
+	Random rnd = new Random();
+	
+	public RandomCPU(int c){
 		color = c;
-		size = s;
 	}
 	
 	int[] decide(GameState state){
@@ -17,11 +19,11 @@ public class RandomCPU {
 		ArrayList<int[]> array = new ArrayList<int[]>();
 		
 		//盤面の空マスを置けるかチェック
-		for(int y=1; y<size + 2; y++){
-			for(int x=1; x<size + 2; x++){
+		for(int y=1; y<size; y++){
+			for(int x=1; x<size; x++){
 				
 				//すでに駒があるときはパス
-				if(state.data[x][y] != 0)
+				if(state.data[x + y * 10] != 0)
 					continue;
 				
 				//置けるマスのとき、候補として記憶
@@ -45,8 +47,6 @@ public class RandomCPU {
 			return pos;
 		}
 		
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
 		
 		/*
 		ランダムクラス内のnextIntメソッドを利用し乱数を作成

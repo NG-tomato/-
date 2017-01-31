@@ -8,9 +8,15 @@ import java.util.Scanner;
 import java.awt.Container;
 
 public class MainApp {
+	public MainApp() {
+	}
 
-	public MainApp(int number){
-		if(number == 1){
+	private void mainWithGUI() {
+			MainApp2 panel = new MainApp2();
+			panel.setVisible(true);
+	}
+
+	private void mainWithoutGUI() {
 			//文字出力
 			Scanner scan = new Scanner(System.in);
 			/*
@@ -30,17 +36,13 @@ public class MainApp {
 				}
 			}
 			*/
-			//文字出力
+			// //文字出力
 			System.out.println("Please input roop count");
 			//繰り返し回数読み込み
 			int count = scan.nextInt();
+			//int count = 1;
+			
 			MainPanel panel = new MainPanel(count);
-		}else if(number == 2){
-			
-			MainApp2 panel = new MainApp2();
-			panel.setVisible(true);
-			
-		}
 	}
 
 //Mainクラス
@@ -52,13 +54,14 @@ public class MainApp {
 		//値取得
 		Scanner scan = new Scanner(System.in);
 		int val = scan.nextInt();
-		//MainAppクラスを呼び出し、画面を作成
-		if(val == 1 || val == 2){
-			MainApp app = new MainApp(val);
+		//int val = 1;
+		
+		if (val == 1) {
+			new MainApp().mainWithoutGUI();
+		} else if (val == 2) {
+			new MainApp().mainWithGUI();
 		}else{
 			System.out.println("Unspecified character was entered");
 		}
-		
 	}
-	
 }

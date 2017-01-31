@@ -29,7 +29,10 @@ public class MainPanel{
 	
 	//メインパネルを作成するメソッド
 	public MainPanel(int count){
-		
+		/*
+		w_cpu.setThreshold(50);
+		b_cpu.setThreshold(100);
+		*/
 		for(int i = 0; i < count; i++){
 			//textDisplay();
 			game();
@@ -78,7 +81,7 @@ public class MainPanel{
 		boolean isLastPass = false;
 		
 		for(;;){
-			textDisplay();
+			//textDisplay();
 
 			// 置くところがなければパス
 			if( state.checkPass() == true ){

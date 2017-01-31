@@ -1,31 +1,33 @@
 import java.util.*;
 
-public class RandomCPU {
+public class mct_RandomCPU {
 	
 	//自分が置くターンを判別する関数
 	int color;	//BLACK or WHITE
-	int size;
+	int size = 10;
 	
-	public RandomCPU(int c,int s){
+	//ランダムクラスのインスタンス化
+	Random rnd = new Random();
+	
+	public mct_RandomCPU(int c){
 		color = c;
-		size = s;
 	}
 	
-	int[] decide(GameState state){
+	int[] decide(mctGameState state){
 		
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = new ArrayList<int[]>();
 		
 		//盤面の空マスを置けるかチェック
-		for(int y=1; y<size + 2; y++){
-			for(int x=1; x<size + 2; x++){
+		for(int y=1; y<size; y++){
+			for(int x=1; x<size; x++){
 				
 				//すでに駒があるときはパス
-				if(state.data[x][y] != 0)
+				if(state.data[x + y * 10] != 0)
 					continue;
 				
 				//置けるマスのとき、候補として記憶
-				if(state.canReverse(x, y) == true){
+				if(state.canPut(x, y) == true){
 					
 					//[x,y]の2つの要素を持つ配列として記憶する
 					int pos[] = {x,y};
@@ -45,8 +47,6 @@ public class RandomCPU {
 			return pos;
 		}
 		
-		//ランダムクラスのインスタンス化
-		Random rnd = new Random();
 		
 		/*
 		ランダムクラス内のnextIntメソッドを利用し乱数を作成
@@ -59,5 +59,4 @@ public class RandomCPU {
 		//乱数で選ばれた置ける場所を返す
 		return array.get(index);
 	}
-	
 }

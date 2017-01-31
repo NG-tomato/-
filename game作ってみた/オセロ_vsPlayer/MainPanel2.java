@@ -34,7 +34,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	static final int H = SIZE * Squares;
 	
 	//状態を表すクラスstateを作成
-	GameState state = new GameState(Squares);
+	GameState state = new GameState();
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//white
@@ -112,7 +112,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 		//ゲームの状態を示すstateクラスのdataメソッドを左上から順番に探索していくことで、駒が置いてある場所と黒か白かを検知する
 		for(int y=1; y < Squares + 2; y++){
 			for(int x=1; x < Squares + 2; x++){
-				if(state.data[x][y] == 1){
+				if(state.data[x + 10 * y] == 1){
 					//黒の駒を表示
 					g.setColor(Color.BLACK);
 					/*
@@ -121,7 +121,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 					点(x, y)を左上隅とする幅w、高さhの長方形に内接する楕円を描く
 					*/
 					g.fillOval((x-1)*SIZE, (y-1)*SIZE, SIZE, SIZE);
-				}else if(state.data[x][y] == -1){
+				}else if(state.data[x + 10 * y] == -1){
 					//白の駒を表示
 					g.setColor(Color.WHITE);
 					g.fillOval((x-1)*SIZE, (y-1)*SIZE, SIZE, SIZE);
@@ -207,18 +207,7 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 			JOptionPane.showMessageDialog(this, "Pass! Next turn is "+state.player);
 		}
 		
-		/*
-		//Black
-		if(state.player == b_cpu.color){
-			//cpu内のdecideメソッドで置く場所を決定
-			int b_action[] = b_cpu.decide(state);
-			
-			//置ける場所がある場合のみ駒を置く処理をする
-			if(b_action[0] != -1)
-				state.put(b_action[0], b_action[1]);
-
-		}
-		*/
+		
 		if(state.player == w_cpu.color){
 			//cpu内のdecideメソッドで置く場所を決定
 			int w_action[] = w_cpu.decide(state);

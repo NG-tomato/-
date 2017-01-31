@@ -30,7 +30,7 @@ public class mctCPU extends CPU {
 	public mctCPU(int c){
 		color = c;
 	}
-	
+		
 	//手を選ぶメソッド
 	//これを実行することで手を選択
 	int[] decide(GameState state){
