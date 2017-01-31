@@ -12,7 +12,7 @@ implementsの場合、インターフェイスで定義されたメソッドをすべて実装する必要がある
 MouseListener はマウスイベントを受け取るクラス
 Observer はあるオブジェクトの変化をそれに依存するオブジェクトに知らせるクラス
 */
-public class mcMainPanel extends MainPanel{
+public class h_mcMainPanel{
 	int size = 10;
 	
 	//状態を表すクラスstateを作成
@@ -20,9 +20,9 @@ public class mcMainPanel extends MainPanel{
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
 	//black
-	RandomCPU b_cpu = new RandomCPU(1);
+	CPU b_cpu = new hyoukaCPU(1);
 	//white
-	RandomCPU w_cpu = new RandomCPU(-1);
+	CPU w_cpu = new hyoukaCPU(-1);
 	
 	//勝敗の結果の合計を入れる配列
 	int winCount[] = new int[3];
@@ -36,7 +36,7 @@ public class mcMainPanel extends MainPanel{
 	
 	int bbb;
 	//メインパネルを作成するメソッド
-	public mcMainPanel(int c, int[] d, int t, int p){
+	public h_mcMainPanel(int c, int[] d, int t, int p){
 		
 		count = c;
 		s_data = Arrays.copyOf(d ,d.length);
