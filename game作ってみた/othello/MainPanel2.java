@@ -37,15 +37,25 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	GameState state = new GameState();
 	
 	//ランダムで打つAIのクラスRandomCPUを作成
-	//white
-	//h_mctCPU w_cpu = new h_mctCPU(-1);
-	mcCPU w_cpu = new mcCPU(-1);
-	//mctCPU w_cpu = new mctCPU(-1);
-
 	//black
-	h_mctCPU b_cpu = new h_mctCPU(1);
+	//RandomCPU b_cpu = new RandomCPU(1);
+	//mcCPU b_cpu = new mcCPU(1);
 	//hyoukaCPU b_cpu = new hyoukaCPU(1);
-	//RandomCPU b_cpu = new RandomCPU(1);	
+	//mctCPU b_cpu = new mctCPU(1);
+	//h_mctCPU b_cpu = new h_mctCPU(1);
+	//c_mctCPU b_cpu = new c_mctCPU(1);
+	hc_mctCPU b_cpu = new hc_mctCPU(1);
+	
+	//white
+	//RandomCPU w_cpu = new RandomCPU(-1);
+	//mcCPU w_cpu = new mcCPU(-1);
+	//mctCPU w_cpu = new mctCPU(-1);
+	//hyoukaCPU w_cpu = new hyoukaCPU(-1);
+	//h_mctCPU w_cpu = new h_mctCPU(-1);
+	//c_mctCPU w_cpu = new c_mctCPU(-1);
+	hc_mctCPU w_cpu = new hc_mctCPU(-1);
+
+
 	//メインパネルを作成するメソッド
 	public MainPanel2(){
 		
@@ -172,6 +182,31 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 	public void mousePressed(MouseEvent e){
 		
 		
+				/*
+		パスチェック
+		盤面が埋まったら両方のプレイヤが置けずパスするので，この処理のみでも問題ない
+		*/
+		if( state.checkPass() == true ){
+			state.player *= -1;
+			//両方パスだと終了
+			if(state.checkPass() == true){
+				int End = state.Win();
+				String Winner;
+				if(End == 1){
+					Winner = "black";
+				}else if(End == -1){
+					Winner = "white";
+				}else {
+					Winner = "Drow";
+				}
+
+				JOptionPane.showMessageDialog(this, "End! " + Winner + " Win !");
+				return;
+			}
+			JOptionPane.showMessageDialog(this, "Pass! Next turn is "+state.turn);
+		}
+
+		
 		//CPUのターン
 		//Black
 		if(state.player == b_cpu.color){
@@ -214,29 +249,6 @@ public class MainPanel2 extends JPanel implements MouseListener, Observer{
 				JOptionPane.showMessageDialog(this, "End!");
 		}
 		*/
-		/*
-		パスチェック
-		盤面が埋まったら両方のプレイヤが置けずパスするので，この処理のみでも問題ない
-		*/
-		if( state.checkPass() == true ){
-			state.player *= -1;
-			//両方パスだと終了
-			if(state.checkPass() == true){
-				int End = state.Win();
-				String Winner;
-				if(End == 1){
-					Winner = "black";
-				}else if(End == -1){
-					Winner = "white";
-				}else {
-					Winner = "Drow";
-				}
-
-				JOptionPane.showMessageDialog(this, "End! " + Winner + " Win !");
-				return;
-			}
-			JOptionPane.showMessageDialog(this, "Pass! Next turn is "+state.turn);
-		}
 		
 	}
 	

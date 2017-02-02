@@ -1,6 +1,7 @@
+//モンテカルロ木探索でカットを行う手法
 import java.util.*;
 
-public class mctCPU extends CPU {
+public class c_mctCPU extends CPU {
 	
 	//自分が置くターンを判別する関数
 	int color;
@@ -9,7 +10,10 @@ public class mctCPU extends CPU {
 	int size = 10;
 	
 	//1手読むごとの総プレイアウト数
-	int count = 1000;
+	int count = 100;
+	
+	//1手読むごとの時間(msミリ秒なので，1秒=1000ms)
+	long time = 1000;
 	
 	//プレイアウトを行った回数を保存する変数
 	int total_count = 0;
@@ -18,16 +22,21 @@ public class mctCPU extends CPU {
 	int threshold = 1;
 	
 	//mapに入れるデータの配列
-	//{プレイアウト数,勝数}
+	//{プレイアウト数,勝数，評価値}
 	int[] data = new int[3];
 	
 	//データを入れるmap
 	//プレイアウト数、ポイント（その局面のプレイヤの勝数）、UCB1値
 	Map<Integer, int[]> map = new HashMap<>();
 	
+	//枝刈りするときに使用する評価関数を作成
+	hyoukaCPU hyouka = new hyoukaCPU(1);
+	
+	//枝刈りするときの点数の差の最大値
+	int cut = 100;
 	
 	//クラスを作成する際に、どっちのプレイヤか選択
-	public mctCPU(int c){
+	public c_mctCPU(int c){
 		color = c;
 	}
 		
@@ -40,17 +49,13 @@ public class mctCPU extends CPU {
 		//putPointメソッドはmctMainPanelの値を与えることで置ける場所のデータを入れた変数を返す
 		ArrayList<int[]> array = putPoint(p.state);
 		
-		/*
-		//ゾブリストハッシュの値が乱数になっているかの確認
-		for(int x =0;x <array.size();x++){
-			int[] data = array.get(x);
-			System.out.println(data[2]);
-		}
-		*/
-
 		//select関数を用いてプレイアウトしていく
-		for(int i=0; i < count; i++){
-			
+		//閾値を選択
+		//プレイアウトが閾値
+		//for(int i=0; i < count; i++){
+		//時間が閾値
+		long start = System.currentTimeMillis();
+		for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
 			//1回のプレイアウトごとにtotal_count変数を加算していくことでここまでのプレイアウトの総計を求める
 			total_count ++;
 						
@@ -61,7 +66,7 @@ public class mctCPU extends CPU {
 		}
 
 		//ポイントが最大の手を求める
-		int i = selectUCB(array);
+		int i = selectUCB(array, state);
 
 		//System.out.println("After Playouts");
 		for (int[] pos : array) {
@@ -123,7 +128,7 @@ public class mctCPU extends CPU {
 		int orgplayer = state.player;
 		
 		//UCB1値が高いものを探すメソッド(selectUCB)を行う
-		int select = selectUCB(array);
+		int select = selectUCB(array, state);
 		//選んだ手の情報を取得する配列
 		int[] select_point = array.get(select);
 
@@ -185,28 +190,45 @@ public class mctCPU extends CPU {
 		//System.out.println("UCB1 : " + UCB1);
 	}
 	
+	public int selectUCB(ArrayList<int[]> array, mctGameState state){
+		GameState s = new GameState();
+		s.set(state.data,state.turn,state.player);
+		return selectUCB(array, s);
+	}
+
 	
 	//UCB値はmapに追加するように切り替える予定なので書き換えが必要
-	public int selectUCB(ArrayList<int[]> array){
+	public int selectUCB(ArrayList<int[]> array, GameState state){
 		//プレイアウト数0の手はまだmap上に作られていないかもしれない
+		//for-each文で配列の要素を1回づつposに入れ，最後まで行ったら抜ける
 		for (int[] pos : array) {
+			//そのKeyのmapがつくられているかどうか
 			if (!map.containsKey(pos[2])) {
-				map.put(pos[2], new int[2]);
+				int[] data ={0, 0, hyouka.hyoukaPoint(pos, state)};
+				map.put(pos[2], data);
+			}
+		}
+		
+		//打てる手の点数の最大値を求める
+		int MaxPoint = Integer.MIN_VALUE;
+		for(int i = 0; i < array.size(); i++){
+			int[] p = map.get(array.get(i)[2]);
+			if(MaxPoint < p[2]){
+				MaxPoint = p[2];
 			}
 		}
 		
 		//選んだ手の情報を保存する配列		//mapから比較対象のデータを取得する配列
 		int select = 0;
 		int[] select_data = map.get(array.get(0)[2]);
-		
 		//打てる手が保存されているarray配列全体で探索を行う
 		for(int i = 1; i < array.size(); i++){
 			//現在の比較対象の手を取得する配列
 			int[] search_point = array.get(i);
 			int[] search_data = map.get(search_point[2]);
-
 			//UCB1値が大きい方をselectの方にする
-			if (ucb1(select_data[0], select_data[1]) < ucb1(search_data[0], search_data[1])) {
+			//ポイントの最大値との差が変数cutよりも大きい時は比較を行わない
+			if ((MaxPoint - search_data[2] < cut)&&(ucb1(select_data[0], select_data[1]) < ucb1(search_data[0], search_data[1]))) {
 				select = i;
 				select_data = search_data;
 			}
@@ -215,16 +237,6 @@ public class mctCPU extends CPU {
 		//System.out.println("UCB : " + ucb1(select_data[0], select_data[1]));
 		//選んだ手の配列上の番号を返す
 		return select;
-	}
-	
-	//パスのときのゾブリストの値をmapに追加する関数
-	public void pass(int passZob){
-		//プレイアウト数0の場合はまだmap上に作られていないので存在しているかどうかで判断する
-		if(map.containsKey(passZob) == false){
-			//mapに入れるための空の配列をつくる
-			//マップに空の配列を追加する
-			map.put(passZob, new int[2]);
-		}
 	}
 	
 	//置ける場所をArrayListで返す関数
@@ -247,7 +259,7 @@ public class mctCPU extends CPU {
 		}
 		return array;
 	}
-	
+		
 	//閾値の最適値を求めるときの閾値を設定するためのメソッド
 	public void setThreshold(int t){
 		threshold = t;

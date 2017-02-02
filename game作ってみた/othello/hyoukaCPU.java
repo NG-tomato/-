@@ -41,7 +41,7 @@ public class hyoukaCPU extends CPU {
 					
 					//[x,y,0]の3つの要素を持つ配列として記憶する
 					//3つ目の0のところにはあとで点数を返す
-					int pos[] = {x, y, 0};
+					int pos[] = {x, y};
 					
 					//[x,y]の配列を置ける場所を記憶するリストに追加する
 					array.add(pos);
@@ -64,28 +64,30 @@ public class hyoukaCPU extends CPU {
 		}
 		
 		int select = 0;
+		int MaxPoint = Integer.MIN_VALUE;//int型の最小値
 		//探索の必要がある場合は評価を行って点数をつける
 		for(int i = 0;i<array.size();i++){
 			int[] pos = array.get(i);
-			hyoukaPoint(pos, state);
+			int point = hyoukaPoint(pos, state);
 			//最大の値がある地点をselectに保存する
 			//新しく求めた値がそれまでの値より大きい場合にselectを変更する
-			int[] serch_pos = array.get(select);
-			if(serch_pos[2] < pos[2]){
+			//System.out.println(" select = "+ select +" : point = "  + point);
+			if(MaxPoint < point){
 				select = i;
+				MaxPoint = point;
 			}
 		}
 		
 		//System.out.println("select = "+ select );
 		
 		
-		//乱数で選ばれた置ける場所を返す
+		//選ばれた置ける場所を返す
 		return array.get(select);
 	}
 	
 	
 	//評価した点数を返すメソッド
-	public void hyoukaPoint(int[] pos, GameState state){
+	public int hyoukaPoint(int[] pos,GameState state){
 		int player = state.player;
 		//stateを新しく作り，その点数を返す
 		GameState s = new GameState();
@@ -96,7 +98,7 @@ public class hyoukaCPU extends CPU {
 		int bp = banPoint(s);
 		int fs = fixStone(s);
 		int cn = canNumber(s);
-		pos[2] = bp * 2 + fs * 5 + cn * 1;
+		return bp * 2 + fs * 5 + cn * 1;
 	}
 	
 	
