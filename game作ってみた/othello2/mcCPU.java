@@ -7,7 +7,7 @@ public class mcCPU extends CPU {
 	
 	
 	//プレイアウト数
-	int count = 1000;
+	int count = 100;
 	
 	//盤の大きさ(壁のところも含めて)
 	int size = 10;

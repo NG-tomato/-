@@ -18,7 +18,7 @@ public class fpu_mctCPU extends CPU {
 	int[] total_count = new int[61];
 	
 	//探索を深くするときのしきい値
-	int threshold = 1;
+	int threshold = 20;
 	
 	//mapに入れるデータの配列
 	//{プレイアウト数,勝数}

@@ -24,8 +24,8 @@ public class MainPanel{
 	//h_mctCPU b_cpu = new h_mctCPU(1);
 	//c_mctCPU b_cpu = new c_mctCPU(1);
 	//hc_mctCPU b_cpu = new hc_mctCPU(1);
-	fpu_mctCPU b_cpu = new fpu_mctCPU(1); 
-	//hfpu_mctCPU b_cpu = new hfpu_mctCPU(1); 
+	//fpu_mctCPU b_cpu = new fpu_mctCPU(1); 
+	hfpu_mctCPU b_cpu = new hfpu_mctCPU(1); 
 
 	
 	//white
@@ -48,7 +48,7 @@ public class MainPanel{
 	int add = 3;
 
 	//値を最適化するときに何回感覚で進捗状況を表示するか
-	int lookGame = 50;
+	int lookGame = 100;
 	
 	//メインパネルを作成するメソッド
 	public MainPanel(int count){
@@ -75,7 +75,7 @@ public class MainPanel{
 			game();
 			//textDisplay();
 			state.reset();
-		}
+		}*/
 		
 		System.out.println();
 		System.out.println("---Loop END---");
@@ -86,7 +86,7 @@ public class MainPanel{
 		//プレイアウトごとの思考平均時間
 		System.out.println();
 		System.out.println("Playout's average time(100 every time): " + b_cpu.avePlayout() + " ms");
-		*/
+		
 
 	}
 	
@@ -188,13 +188,14 @@ public class MainPanel{
 	
 	//木を展開する閾値Thresholdの最適化(vsランダムCPUの勝率により最適化)
 	public void decideThreshold(int count){
-		int j = 1;
+		int BIG = 20;
 		//Cの比較
-		for(double add = 100;add >= 1;add = (double)add / 10){
-			
+		for(int add = 5;add >= 1;add = add / 2){
+			int j = BIG;
 			//前の手順での勝数を保存する変数
 			int backWin = -1;
-			while(j>0){
+			while(j <= b_cpu.count){
+
 				//比較中の閾値ごとの勝ち負けを保存
 				int[] thresholdCount = new int[3];
 				
@@ -224,8 +225,8 @@ public class MainPanel{
 				//勝数が逆転したら終了
 				if(backWin > winCount[0]){
 					System.out.println();
-					j -= add;
-					System.out.println("Last Threshold is "+ j);
+					BIG = j - add;
+					System.out.println("Last Threshold is "+ BIG);
 					break;
 				}else{
 					backWin = winCount[0];
@@ -235,6 +236,7 @@ public class MainPanel{
 				}
 			}
 		}
+		System.out.println("Threshold is "+ BIG);
 	}
 
 	//枝刈りを行う手法の値FPUを決定するメソッド(vsランダムCPUの勝率により最適化)
@@ -242,7 +244,7 @@ public class MainPanel{
 		double j = 1;
 		//Cの比較
 		for(double add = -0.1;add <=-0.001;add = (double)add / 10){
-			
+			count *= 2;
 			//前の手順での勝数を保存する変数
 			int backWin = -1;
 			while(j>0){
@@ -286,6 +288,7 @@ public class MainPanel{
 				}
 			}
 		}
+		
 	}
 
 	
