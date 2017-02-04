@@ -13,7 +13,7 @@ public class hc_mctCPU extends CPU {
 	int count = 100;
 	
 	//1手読むごとの時間(msミリ秒なので，1秒=1000ms)
-	long time = 1000;
+	long time = 300;
 	
 	//プレイアウトを行った回数を保存する変数
 	int total_count = 0;
@@ -52,10 +52,11 @@ public class hc_mctCPU extends CPU {
 		//select関数を用いてプレイアウトしていく
 		//閾値を選択
 		//プレイアウトが閾値
-		//for(int i=0; i < count; i++){
+		for(int i=0; i < count; i++){
 		//時間が閾値
-		long start = System.currentTimeMillis();
-		for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
+		//long start = System.currentTimeMillis();
+		//for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
+		//}コメントアウトしてる分の括弧閉じがないとずれるので
 			//1回のプレイアウトごとにtotal_count変数を加算していくことでここまでのプレイアウトの総計を求める
 			total_count ++;
 						
@@ -67,18 +68,16 @@ public class hc_mctCPU extends CPU {
 
 		//ポイントが最大の手を求める
 		int i = selectUCB(array, state);
-
+		/*
 		//System.out.println("After Playouts");
 		for (int[] pos : array) {
 			int[] playoutResult = map.get(pos[2]);
-			/*
 			System.out.printf("Legal move: (%d, %d) @%d ==> %f (%d / %d)\n",
 												pos[0], pos[1], pos[2],
 												ucb1(playoutResult[0], playoutResult[1]),
 												playoutResult[1], playoutResult[0]);
-			*/
 		}
-		
+		*/
 		/*
 		//選んだ手のデータを表示
 		int[] select_data = array.get(i);
@@ -264,6 +263,13 @@ public class hc_mctCPU extends CPU {
 	//閾値の最適値を求めるときの閾値を設定するためのメソッド
 	public void setThreshold(int t){
 		threshold = t;
+		//閾値を設定するときにマップは初期化を行う
+		map = new HashMap<>();
+	}
+		
+	//枝刈りするポイントの差の最適値を求めるときの最大差を設定するためのメソッド
+		public void setCut(int c){
+		cut = c;
 		//閾値を設定するときにマップは初期化を行う
 		map = new HashMap<>();
 	}

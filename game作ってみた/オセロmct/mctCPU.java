@@ -9,7 +9,7 @@ public class mctCPU extends CPU {
 	int size = 10;
 	
 	//1手読むごとの総プレイアウト数
-	int count = 10000;
+	int count = 1000;
 	
 	//プレイアウトを行った回数を保存する変数
 	int total_count = 0;

@@ -13,7 +13,7 @@ public class c_mctCPU extends CPU {
 	int count = 100;
 	
 	//1手読むごとの時間(msミリ秒なので，1秒=1000ms)
-	long time = 1000;
+	long time = 300;
 	
 	//プレイアウトを行った回数を保存する変数
 	int total_count = 0;
@@ -52,10 +52,11 @@ public class c_mctCPU extends CPU {
 		//select関数を用いてプレイアウトしていく
 		//閾値を選択
 		//プレイアウトが閾値
-		//for(int i=0; i < count; i++){
+		for(int i=0; i < count; i++){
 		//時間が閾値
-		long start = System.currentTimeMillis();
-		for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
+		//long start = System.currentTimeMillis();
+		//for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
+		//}コメントアウトしてる分の括弧閉じがないとずれるので
 			//1回のプレイアウトごとにtotal_count変数を加算していくことでここまでのプレイアウトの総計を求める
 			total_count ++;
 						
@@ -217,6 +218,7 @@ public class c_mctCPU extends CPU {
 				MaxPoint = p[2];
 			}
 		}
+		//System.out.println("MAX Point = " + MaxPoint);
 		
 		//選んだ手の情報を保存する配列		//mapから比較対象のデータを取得する配列
 		int select = 0;
@@ -227,8 +229,12 @@ public class c_mctCPU extends CPU {
 			int[] search_point = array.get(i);
 			int[] search_data = map.get(search_point[2]);
 			//UCB1値が大きい方をselectの方にする
+			/*
+			if(MaxPoint - search_data[2] > cut){
+				System.out.println("CUT Point = " + search_data[2]);
+			}*/
 			//ポイントの最大値との差が変数cutよりも大きい時は比較を行わない
-			if ((MaxPoint - search_data[2] < cut)&&(ucb1(select_data[0], select_data[1]) < ucb1(search_data[0], search_data[1]))) {
+			if ((MaxPoint - search_data[2] <= cut)&&(ucb1(select_data[0], select_data[1]) < ucb1(search_data[0], search_data[1]))) {
 				select = i;
 				select_data = search_data;
 			}
@@ -263,6 +269,14 @@ public class c_mctCPU extends CPU {
 	//閾値の最適値を求めるときの閾値を設定するためのメソッド
 	public void setThreshold(int t){
 		threshold = t;
+		//閾値を設定するときにマップは初期化を行う
+		map = new HashMap<>();
+	}
+	
+		
+	//枝刈りするポイントの差の最適値を求めるときの最大差を設定するためのメソッド
+	public void setCut(int c){
+		cut = c;
 		//閾値を設定するときにマップは初期化を行う
 		map = new HashMap<>();
 	}
