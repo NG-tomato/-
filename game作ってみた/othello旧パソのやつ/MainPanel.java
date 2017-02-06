@@ -24,13 +24,13 @@ public class MainPanel{
 	//h_mctCPU b_cpu = new h_mctCPU(1);
 	//c_mctCPU b_cpu = new c_mctCPU(1);
 	//hc_mctCPU b_cpu = new hc_mctCPU(1);
-	//fpu_mctCPU b_cpu = new fpu_mctCPU(1); 
-	hfpu_mctCPU b_cpu = new hfpu_mctCPU(1); 
+	fpu_mctCPU b_cpu = new fpu_mctCPU(1); 
+	//hfpu_mctCPU b_cpu = new hfpu_mctCPU(1); 
 
 	
 	//white
-	//RandomCPU w_cpu = new RandomCPU(-1);
-	mcCPU w_cpu = new mcCPU(-1);
+	RandomCPU w_cpu = new RandomCPU(-1);
+	//mcCPU w_cpu = new mcCPU(-1);
 	//mctCPU w_cpu = new mctCPU(-1);
 	//hyoukaCPU w_cpu = new hyoukaCPU(-1);
 	//h_mctCPU w_cpu = new h_mctCPU(-1);
@@ -48,7 +48,7 @@ public class MainPanel{
 	int add = 3;
 
 	//値を最適化するときに何回感覚で進捗状況を表示するか
-	int lookGame = 50;
+	int lookGame = 100;
 	
 	//メインパネルを作成するメソッド
 	public MainPanel(int count){
@@ -57,21 +57,22 @@ public class MainPanel{
 		//閾値を決めるメソッド
 		//decideThreshold(count);
 		
-		//FPUの最適値を求める
-		//decideFPU(count);
 		
 		
 		//UCB1値のCの最適化
-		decideC(count);
+		//decideC(count);
+		
+		//FPUの最適値を求める
+		//decideFPU(count);
 
 		
 		//枝刈りするときの点数の差の最大値
 		//decideCut(count);
 		
-		/*
+		
 		//通常のgame
 		for(int i = 0; i < count; i++){
-			if(i%100 == 0){
+			if(i % 50 == 0){
 				System.out.println(i);
 			}
 			game();
@@ -79,19 +80,29 @@ public class MainPanel{
 			state.reset();
 			b_cpu.reset();
 		}
-		
 		System.out.println();
 		System.out.println("---Loop END---");
 		System.out.println("Black win : " + winCount[0]);
 		System.out.println("White win : " + winCount[1]);
 		System.out.println("Draw      : " + winCount[2]);
-		*/
+		
 		/*
-		//プレイアウトごとの思考平均時間
-		System.out.println();
-		System.out.println("Playout's average time(100 every time): " + b_cpu.avePlayout() + " ms");
+		//平均時間を求める
+		long shikou = 0;
+		for(int i = 0; i < count; i++){
+			if(i % 50 == 0){
+				System.out.println(i);
+			}
+			game();
+			//プレイアウトごとの思考平均時間
+			shikou +=  b_cpu.avePlayout();
+			state.reset();
+			b_cpu.reset();
+		}
+		shikou = (long)shikou/count;
+		System.out.println("Playout's average time(100 every time): " + shikou + " ms");
 		*/
-
+		
 	}
 	
 		
@@ -264,13 +275,13 @@ public class MainPanel{
 		//これを活用して，探索の回数を減らす
 		Map<Double, int[]> map = new HashMap<>();
 		
-		double j = 1.2;
+		double j = 5;
 		//Cの比較
-		for(double add = -0.5;add <=-0.001;add = (double)add / 2){
+		for(double add = -2;add <=-0.001;add = (double)add / 2){
 			
 			//前の手順での勝数を保存する変数
 			int backWin = -1;
-			while(j>=0){
+			while(j>0){
 				//比較中の閾値ごとの勝ち負けを保存
 				int[] FPUCount = new int[3];
 				
@@ -339,13 +350,13 @@ public class MainPanel{
 		Map<Double, int[]> map = new HashMap<>();
 
 		
-		double j = 1.2;
+		double j = 3;
 		//Cの比較
-		for(double add = j/2;add > 0.01;add = (double)add/2){
+		for(double add = 1.0;add > 0.01;add = (double)add/2){
 			
 			//前の手順での勝数を保存する変数
 			int backWin = -1;
-			while(j>=0){
+			while(j>0){
 				//比較中の閾値ごとの勝ち負けを保存
 				int[] cutCount = new int[3];
 				
@@ -399,195 +410,12 @@ public class MainPanel{
 				}
 			}
 			j += add;
+			/*
+			if(j>1){
+				j=1;
+			}*/
 		}
 	}
 	
-	/*
-	//展開するプレイアウト数の閾値
-	public int decideThreshold(int count){
-		int j;
-		//閾値の比較
-		//比較する閾値の差
-		int add = 1;
-		for(j = 1;j < w_cpu.count;j+=add){
-			//比較中の閾値ごとの勝ち負けを保存
-			int[] thresholdCount = new int[3];
-			
-			//閾値を変更
-			b_cpu.setThreshold(j);
-			System.out.println("Black's threshold is " + j);
-			w_cpu.setThreshold(j + add);
-			System.out.println("White's threshold is " + (j+add));
-			for(int i = 0; i < count/2; i++){
-				if(i%50 == 0){
-					System.out.println("Now Game is " + i);
-				}
-				game();
-				//textDisplay();
-				//System.out.println("Now Game is "+ i);
-				state.reset();
-			}
-			System.out.println();
-			System.out.println("---Half loop END---");
-			System.out.println("Black win : " + winCount[0]);
-			System.out.println("White win : " + winCount[1]);
-			System.out.println("Draw      : " + winCount[2]);
-			thresholdCount[0] += winCount[0];thresholdCount[1] += winCount[1];thresholdCount[2] += winCount[2];
-			winCount = new int[3];
-			
-			//閾値を変更
-			b_cpu.setThreshold(j + add);
-			System.out.println("Black's threshold is " + (j+add));
-			w_cpu.setThreshold(j);
-			System.out.println("White's threshold is " + j);
-			for(int i = 0; i < count/2; i++){
-				
-				if(i%50 == 0){
-					System.out.println("Now Game is " + i);
-				}
-				game();
-				//textDisplay();
-				//System.out.println("Now Game is "+ i);
-				state.reset();
-			}
-			System.out.println();
-			System.out.println("---Half loop END---");
-			System.out.println("Black win : " + winCount[0]);
-			System.out.println("White win : " + winCount[1]);
-			System.out.println("Draw      : " + winCount[2]);
-			thresholdCount[0] += winCount[1];thresholdCount[1] += winCount[0];thresholdCount[2] += winCount[2];
-			winCount = new int[3];
-			
-			System.out.println("--- Loop END---");
-			System.out.println(j + "win : " + thresholdCount[0]);
-			System.out.println((j+add) + "win : " + thresholdCount[1]);
-			System.out.println("Draw      : " + thresholdCount[2]);
-			
-			
-			//勝数が逆転したら終了
-			if(thresholdCount[0] > thresholdCount[1]){
-				break;
-			}
-		}
-		return j;
-	}
-	*/
-	
-	/*
-	//枝刈りするときの点数の差の最大値
-	public void decideCut(int count){
-		//前の手順での勝数を保存する変数
-		int backWin = -1;
-		//閾値の比較
-		for(int j = 800;j>0;){
-			//比較中の閾値ごとの勝ち負けを保存
-			int[] cutCount = new int[3];
-			
-			//勝敗数を初期化
-			winCount = new int[3];
-			
-			//閾値を変更
-			b_cpu.setCut(j);
-			System.out.println("Black's CUT is " + j);
-			for(int i = 0; i < count; i++){
-				
-				if(i%10 == 0){
-					System.out.println("Now Game is " + i);
-				}
-				game();
-				//textDisplay();
-				//System.out.println("Now Game is "+ i);
-				state.reset();
-				b_cpu.reset();
-			}
-			System.out.println();
-			System.out.println("---Loop END---");
-			System.out.println("Black win : " + winCount[0]);
-			System.out.println("White win : " + winCount[1]);
-			System.out.println("Draw      : " + winCount[2]);
-						
-			
-			//勝数が逆転したら終了
-			if(backWin > winCount[0]){
-				System.out.println();
-				System.out.println("Last cut is "+ j);
-				break;
-			}else{
-				backWin = winCount[0];
-				j += add;
-			}
-		}
-	}*/
-	
-	/*
-	//UCBの定数Cの最適値を求めるメソッド
-	public double decideC(int count,double add, double c){
-		//閾値の比較
-		//比較する閾値の差
-		
-		for(double j = c;j > 0;j+=add){
-			//比較中の閾値ごとの勝ち負けを保存
-			int[] cCount = new int[3];
-			
-			//閾値を変更
-			b_cpu.setC(j);
-			System.out.println("Black's C is " + j);
-			w_cpu.setC(j+add);
-			System.out.println("White's C is " + (j+add));
-			for(int i = 0; i < count/2; i++){
-				
-				if(i%50 == 0){
-					System.out.println("Now Game is " + i);
-				}
-				game();
-				//textDisplay();
-				//System.out.println("Now Game is "+ i);
-				state.reset();
-			}
-			System.out.println();
-			System.out.println("---Half loop END---");
-			System.out.println("Black win : " + winCount[0]);
-			System.out.println("White win : " + winCount[1]);
-			System.out.println("Draw      : " + winCount[2]);
-			cCount[0] += winCount[0];cCount[1] += winCount[1];cCount[2] += winCount[2];
-			winCount = new int[3];
-			
-			//閾値を変更
-			b_cpu.setC(j+add);
-			System.out.println("Black's C is " + (j+add));
-			w_cpu.setC(j);
-			System.out.println("White's C is " + j);
-			for(int i = 0; i < count/2; i++){
-				
-				if(i%50 == 0){
-					System.out.println("Now Game is " + i);
-				}
-				game();
-				//textDisplay();
-				//System.out.println("Now Game is "+ i);
-				state.reset();
-			}
-			System.out.println();
-			System.out.println("---Half loop END---");
-			System.out.println("Black win : " + winCount[0]);
-			System.out.println("White win : " + winCount[1]);
-			System.out.println("Draw      : " + winCount[2]);
-			cCount[0] += winCount[1];cCount[1] += winCount[0];cCount[2] += winCount[2];
-			winCount = new int[3];
-			
-			System.out.println("--- Loop END---");
-			System.out.println(j + "win : " + cCount[0]);
-			System.out.println((j + add) + "win : " + cCount[1]);
-			System.out.println("Draw      : " + cCount[2]);
-			
-			
-			//勝数が逆転したら終了
-			if(cCount[0] > cCount[1]){
-				c = j;
-				break;
-			}
-		}
-		return c;
-	}*/
 
 }

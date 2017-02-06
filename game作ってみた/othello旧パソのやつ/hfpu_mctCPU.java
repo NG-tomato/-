@@ -12,7 +12,7 @@ public class hfpu_mctCPU extends CPU {
 	int count = 100;
 	
 	//1手読むごとの時間(msミリ秒なので，1秒=1000ms)
-	long time = 100;
+	long time = 1000;
 	
 	//深さごとのプレイアウト数を保存する配列
 	int[] total_count = new int[61];
@@ -29,7 +29,7 @@ public class hfpu_mctCPU extends CPU {
 	Map<Integer, int[]> map = new HashMap<>();
 	
 	//fpuの値
-	double fpu = 100.0;
+	double fpu = 10.0;
 	
 	//UCB1アルゴリズムの定数C
 	double C = 0.12;

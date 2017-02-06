@@ -18,7 +18,7 @@ public class fpu_mctCPU extends CPU {
 	int[] total_count = new int[61];
 	
 	//探索を深くするときのしきい値
-	int threshold = 20;
+	int threshold = 38;
 	
 	//mapに入れるデータの配列
 	//{プレイアウト数,勝数}
@@ -258,28 +258,31 @@ public class fpu_mctCPU extends CPU {
 		return array;
 	}
 	
+	public void reset(){
+		map = new HashMap<>();
+		total_count = new int[61];
+		avePlayout = new ArrayList<Long>();
+	}
+	
 	//閾値の最適値を求めるときの閾値を設定するためのメソッド
 	public void setThreshold(int t){
 		threshold = t;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
-		map = new HashMap<>();
-		int[] total_count = new int[61];
-	}
+		reset();
+		}
 	
 	//fpuの最適値を求めるときの閾値を設定するためのメソッド
 	public void setFPU(double f){
 		fpu = f;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
-		map = new HashMap<>();
-		int[] total_count = new int[61];
-	}
+		reset();
+		}
 	
 	//定数Cの最適値を求めるときの閾値を設定するためのメソッド
 	public void setC(double teisu){
 		 C = teisu;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
-		map = new HashMap<>();
-		int[] total_count = new int[61];
+		reset();
 	}
 	
 	//プレイアウトの平均時間を返すメソッド
