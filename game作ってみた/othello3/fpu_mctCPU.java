@@ -2,23 +2,27 @@ import java.util.*;
 
 public class fpu_mctCPU extends CPU {
 	
-	//自分が置くターンを判別する関数
-	int color;
-	
-	//盤の大きさの変数（壁含む）
-	int size = 10;
-	
 	//1手読むごとの総プレイアウト数
-	int count = 100;
+	int count = 50;
 	
 	//1手読むごとの時間(msミリ秒なので，1秒=1000ms)
-	long time = 1000;
+	long time = 300;
 	
+	//時間とプレイアウト数どっちを使用するか(trueのときプレイアウト数，falseのとき時間)
+	boolean switch_threshold = true;
+	
+	//探索を深くするときのしきい値
+	int threshold = 39;//38;//38;
+
+	//UCB1アルゴリズムの定数C
+	double C = 0.39;//0.39;
+
+	//fpuの値
+	double fpu = 2.47;//4.82;//100;
+
 	//深さごとのプレイアウト数を保存する配列
 	int[] total_count = new int[61];
 	
-	//探索を深くするときのしきい値
-	int threshold = 1;//38;
 	
 	//mapに入れるデータの配列
 	//{プレイアウト数,勝数}
@@ -26,26 +30,25 @@ public class fpu_mctCPU extends CPU {
 	
 	//データを入れるmap
 	//プレイアウト数、ポイント（その局面のプレイヤの勝数）、UCB1値
-	Map<Integer, int[]> map = new HashMap<>();
-	
-	//fpuの値
-	double fpu = 10.0;
-	
-	//UCB1アルゴリズムの定数C
-	double C = 1;//0.39;
+	Map<Integer, int[]> map = new HashMap<>();	
 	
 	//一手選ぶごとのプレイアウトの平均時間を入れるリスト
 	ArrayList<Long> avePlayout = new ArrayList<Long>();
 
-	
-	
+	//プレイアウトの回数を数える変数
+	ArrayList<Integer> aveCount = new ArrayList<Integer>();
+			
+	//プレイアウトの回数の変数
+	int playoutCount = 0;
+
 	//クラスを作成する際に、どっちのプレイヤか選択
 	public fpu_mctCPU(int c){
-		color = c;
+		super(c);
 	}
 		
 	//手を選ぶメソッド
 	//これを実行することで手を選択
+	@Override
 	int[] decide(GameState state){
 		mctMainPanel p = new mctMainPanel(state.data , state.turn, state.player);
 		
@@ -56,20 +59,22 @@ public class fpu_mctCPU extends CPU {
 		//プレイアウトの時間計測開始
 		long start = System.currentTimeMillis();
 		
+		
 		//select関数を用いてプレイアウトしていく
 		//閾値を選択
 		//プレイアウトが閾値
-		for(int i=0; i < count; i++){
-		//時間が閾値
-		//long start = System.currentTimeMillis();
-		//for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
-			//}コメントアウトしてる分の括弧閉じがないとずれるので
-			
-			//selsect関数はUCB1値が高いものを選んでプレイアウトし、結果をmap関数に適応する変数
-			//配列プレイアウト数が一定以上の場合、プレイアウトは行わず、下に再帰的にメソッドを作ることで探索を深めていく
-			int x = select(p.state.clone());
-			
-			
+		if(switch_threshold){
+			for(int i=0; i < count; i++){
+				/*	selsect関数はUCB1値が高いものを選んでプレイアウトし、結果をmap関数に適応する変数	プレイアウト数が一定以上の場合、プレイアウトは行わず、下に再帰的にメソッドを作ることで探索を深めていく
+				*/
+				int x = select(p.state.clone());
+			}
+		}else{
+			//時間が閾値
+			for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
+				int x = select(p.state.clone());
+			}
+
 		}
 		
 		//プレイアウトの時間計測終了
@@ -78,17 +83,19 @@ public class fpu_mctCPU extends CPU {
 		long PlayoutTime = end - start;
 		//プレイアウト時間をリストに追加
 		avePlayout.add(PlayoutTime);
+		//プレイアウト回数をリストに追加
+		aveCount.add(playoutCount);
+		//プレイアウトの回数の変数を初期化
+		playoutCount = 0;
+
+
 
 		
 		//ポイントが最大の手を求める
 		int i = selectUCB(array,state.black + state.white - 4);
 
-		//System.out.println("After Playouts");
 		for (int[] pos : array) {
 			int[] playoutResult = map.get(pos[2]);
-			/*
-			System.out.printf("Legal move: (%d, %d) @%d ==> %f (%d / %d)\n",ucb1(playoutResult[0],playoutResult[1]),playoutResult[1], playoutResult[0]);
-			*/
 		}
 		
 		//手の(x,y)座標
@@ -100,18 +107,9 @@ public class fpu_mctCPU extends CPU {
 	//手を選びながら探索していくメソッド
 	public int select(mctGameState state) {
 		
-		//System.out.println("select is called");
-
 		//置ける場所を記憶するリスト
 		ArrayList<int[]> array = putPoint(state);
-		
-		/*
-		state.textDisplay();
-		for (int[] pos : array) {
-		System.out.printf("can put at (%d, %d)\n", pos[0], pos[1]);
-		}
-		*/
-		
+				
 		if (array.size() == 0) {
 			// 置けなければパスをする (しかない)
 			if (state.isLastPass) {
@@ -145,15 +143,7 @@ public class fpu_mctCPU extends CPU {
 		int winner = (data[0] >= threshold) ? select(state) : playout(state);
 		total_count[t]++;
 		data[0] ++;
-		if (winner == orgplayer){
-			//System.out.println("winner=player");
-			data[1]++;
-			//if(orgplayer == 1 && winner == 1) System.out.println("test");
-		//}else {
-			//System.out.println("winner!=player");
-		}
-		//System.out.println("select is End");
-		//System.out.println("player : " + orgplayer);
+		if (winner == orgplayer) data[1]++;
 		return winner;
 	}
 
@@ -162,13 +152,11 @@ public class fpu_mctCPU extends CPU {
 		while (true) {
 			ArrayList<int[]> array = putPoint(state);
 
-			// System.out.println("IN PLAYOUT:");
-			// state.textDisplay();
-			// System.out.println("array.size() = " + array.size());
-
 			if (array.size() == 0) {
 				// 置けなければパスをする (しかない)
-				if (state.isLastPass) {
+				if (state.isLastPass) {	
+					//プレイアウト回数の加算
+					playoutCount++;
 					// 相手もパスをしていた場合は ここで結果を返す
 					if (state.black > state.white) return 1;
 					if (state.white > state.black) return -1;
@@ -192,7 +180,6 @@ public class fpu_mctCPU extends CPU {
 		} else {
 			return fpu;
 		}
-		//System.out.println("UCB1 : " + UCB1);
 	}
 	
 	
@@ -222,7 +209,6 @@ public class fpu_mctCPU extends CPU {
 			}
 		}
 		
-		//System.out.println("UCB : " + ucb1(select_data[0], select_data[1],total));
 		//選んだ手の配列上の番号を返す
 		return select;
 	}
@@ -258,27 +244,32 @@ public class fpu_mctCPU extends CPU {
 		return array;
 	}
 	
+	@Override
 	public void reset(){
 		map = new HashMap<>();
 		total_count = new int[61];
 		avePlayout = new ArrayList<Long>();
+		aveCount = new ArrayList<Integer>();
 	}
 	
 	//閾値の最適値を求めるときの閾値を設定するためのメソッド
+	@Override
 	public void setThreshold(int t){
 		threshold = t;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
 		reset();
-		}
+	}
 	
 	//fpuの最適値を求めるときの閾値を設定するためのメソッド
+	@Override
 	public void setFPU(double f){
 		fpu = f;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
 		reset();
-		}
-	
+	}
+		
 	//定数Cの最適値を求めるときの閾値を設定するためのメソッド
+	@Override
 	public void setC(double teisu){
 		 C = teisu;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
@@ -286,6 +277,7 @@ public class fpu_mctCPU extends CPU {
 	}
 	
 	//プレイアウトの平均時間を返すメソッド
+	@Override
 	public long avePlayout(){
 		int x = avePlayout.size();
 		long sum=0;
@@ -294,6 +286,18 @@ public class fpu_mctCPU extends CPU {
 			sum += add;
 		}
 		return (long)sum/x;
+	}
+	
+	//プレイアウトの平均回数を返すメソッド
+	@Override
+	public double aveCount(){
+		int x = aveCount.size();
+		int sum=0;
+		for(int i=0;i<x;i++){
+			int add = aveCount.get(i);
+			sum += add;
+		}
+		return (double)sum/x;
 	}
 
 

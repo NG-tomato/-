@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class fpu_mctCPU extends CPU {
+public class hfpu_mctCPU extends CPU {
 	
 	//自分が置くターンを判別する関数
 	int color;
@@ -12,13 +12,13 @@ public class fpu_mctCPU extends CPU {
 	int count = 100;
 	
 	//1手読むごとの時間(msミリ秒なので，1秒=1000ms)
-	long time = 1000;
+	long time = 100;
 	
 	//深さごとのプレイアウト数を保存する配列
 	int[] total_count = new int[61];
 	
 	//探索を深くするときのしきい値
-	int threshold = 1;//38;
+	int threshold = 23;
 	
 	//mapに入れるデータの配列
 	//{プレイアウト数,勝数}
@@ -29,21 +29,20 @@ public class fpu_mctCPU extends CPU {
 	Map<Integer, int[]> map = new HashMap<>();
 	
 	//fpuの値
-	double fpu = 10.0;
+	double fpu = 100.0;
 	
 	//UCB1アルゴリズムの定数C
-	double C = 1;//0.39;
+	double C = 0.12;
 	
 	//一手選ぶごとのプレイアウトの平均時間を入れるリスト
 	ArrayList<Long> avePlayout = new ArrayList<Long>();
-
-	
 	
 	//クラスを作成する際に、どっちのプレイヤか選択
-	public fpu_mctCPU(int c){
+	public hfpu_mctCPU(int c){
 		color = c;
 	}
-		
+			
+	
 	//手を選ぶメソッド
 	//これを実行することで手を選択
 	int[] decide(GameState state){
@@ -97,7 +96,7 @@ public class fpu_mctCPU extends CPU {
 	}
 	
 	
-	//手を選びながら探索していくメソッド
+		//手を選びながら探索していくメソッド
 	public int select(mctGameState state) {
 		
 		//System.out.println("select is called");
@@ -157,7 +156,7 @@ public class fpu_mctCPU extends CPU {
 		return winner;
 	}
 
-	// 完全にランダムプレイ
+	// 評価値を用いてプレイアウトを行う
 	int playout(mctGameState state) {
 		while (true) {
 			ArrayList<int[]> array = putPoint(state);
@@ -177,11 +176,13 @@ public class fpu_mctCPU extends CPU {
 				// パスをして1手進めたところでプレイアウトしてもらう
 				state.pass();
 			} else {
-				int selected = new Random().nextInt(array.size());
-				state.put(array.get(selected)[0], array.get(selected)[1]);
+				hyoukaCPU CPU = new hyoukaCPU(1);
+				int[] selected = CPU.decide(state);
+				state.put(selected[0], selected[1]);
 			}
 		}
 	}
+
 	
 	//UCB1値の計算をするメソッド
 	//勝数が0の場所は無限になるため計算しない
@@ -263,38 +264,40 @@ public class fpu_mctCPU extends CPU {
 		total_count = new int[61];
 		avePlayout = new ArrayList<Long>();
 	}
+
 	
 	//閾値の最適値を求めるときの閾値を設定するためのメソッド
 	public void setThreshold(int t){
 		threshold = t;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
-		reset();
-		}
+		map = new HashMap<>();
+		int[] total_count = new int[61];
+	}
 	
 	//fpuの最適値を求めるときの閾値を設定するためのメソッド
 	public void setFPU(double f){
 		fpu = f;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
-		reset();
-		}
+		map = new HashMap<>();
+		int[] total_count = new int[61];
+	}
 	
 	//定数Cの最適値を求めるときの閾値を設定するためのメソッド
 	public void setC(double teisu){
 		 C = teisu;
 		//閾値を設定するときにマップとプレイアウト数の初期化を行う
-		reset();
+		map = new HashMap<>();
+		int[] total_count = new int[61];
 	}
 	
 	//プレイアウトの平均時間を返すメソッド
-	public long avePlayout(){
+	public double avePlayout(){
 		int x = avePlayout.size();
 		long sum=0;
 		for(int i=0;i<x;i++){
 			long add = avePlayout.get(i);
 			sum += add;
 		}
-		return (long)sum/x;
+		return (double)sum/x;
 	}
-
-
 }
