@@ -50,11 +50,12 @@ public class fpu_mctCPU extends CPU {
 	//これを実行することで手を選択
 	@Override
 	int[] decide(GameState state){
-		mctMainPanel p = new mctMainPanel(state.data , state.turn, state.player);
+		mctGameState mctState = new mctGameState();
+		mctState.set(state.data , state.turn, state.player);
 		
 		//置ける場所をリストに取得
 		//putPointメソッドはmctMainPanelの値を与えることで置ける場所のデータを入れた変数を返す
-		ArrayList<int[]> array = putPoint(p.state);
+		ArrayList<int[]> array = putPoint(mctState);
 		
 		//プレイアウトの時間計測開始
 		long start = System.currentTimeMillis();
@@ -67,12 +68,12 @@ public class fpu_mctCPU extends CPU {
 			for(int i=0; i < count; i++){
 				/*	selsect関数はUCB1値が高いものを選んでプレイアウトし、結果をmap関数に適応する変数	プレイアウト数が一定以上の場合、プレイアウトは行わず、下に再帰的にメソッドを作ることで探索を深めていく
 				*/
-				int x = select(p.state.clone());
+				int x = select(mctState.clone());
 			}
 		}else{
 			//時間が閾値
 			for(long i = start; (i - start) <= time;i = System.currentTimeMillis()){
-				int x = select(p.state.clone());
+				int x = select(mctState.clone());
 			}
 
 		}

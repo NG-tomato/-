@@ -186,6 +186,7 @@ public class mctGameState extends GameState{
 
 		turn = 0;
 		player = BLACK;
+		isLastPass = false;
 
 		//現状態でのゾブリストハッシュの値を作る
 		zobhash = Zobrist.makeZob(data, player);

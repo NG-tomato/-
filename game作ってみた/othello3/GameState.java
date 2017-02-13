@@ -44,13 +44,24 @@ public class GameState extends Observable{
 	int black;
 	int white;
 	boolean isLastPass;
-
 	
 	//最初の状態を作るメソッド
 	public GameState(){
 		reset();
 	}
 	
+	//現状のコピーのGameStateを作るメソッド
+	public GameState clone() {
+		GameState other = new GameState();
+		other.data	  = Arrays.copyOf(data, data.length);
+		other.turn		= turn;
+		other.player	= player;
+		other.black		= black;
+		other.white		= white;
+		other.isLastPass = isLastPass;
+		return other;
+	}
+
 	/*
 	駒を置く処理を作成
 	(x,y)で置く位置を取得し、置けるかどうかをtrueかfalseで返す
@@ -73,6 +84,7 @@ public class GameState extends Observable{
 		
 		setChanged();
 		notifyObservers();
+		isLastPass = false;
 		
 		return true;
 	}
@@ -83,6 +95,9 @@ public class GameState extends Observable{
 	doReverse 実際に置き換えるかどうか(trueだと置き換える、falseだと置き換えない)
 	*/
 	public boolean reverse(int x,int y, boolean doReverse ){
+		//すでに駒があるところには置けない
+		if(data[at(x,y)] != 0)return false;
+		
 		/*
 		置けるか確かめた結果を入れる変数
 		最初に置けないと設定することで、複数の処理の中でtrueに変化しない場合は置けないという形にすることができる。
@@ -221,6 +236,12 @@ public class GameState extends Observable{
 		player = 1;
 		black = 2;
 		white = 2;
+		isLastPass = false;
+	}
+	
+	public void pass(){
+		player *= -1;
+		isLastPass = true;
 	}
 	
 	public void set(int[] d, int t, int p){

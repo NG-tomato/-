@@ -9,7 +9,7 @@ public class hfpu_mctCPU extends fpu_mctCPU {
 	long time = 100;
 	
 	//時間とプレイアウト数どっちを使用するか(trueのときプレイアウト数，falseのとき時間)
-	boolean switch_threshold = true;
+	boolean switch_threshold = false;
 	
 	//探索を深くするときのしきい値
 	int threshold = 30;
